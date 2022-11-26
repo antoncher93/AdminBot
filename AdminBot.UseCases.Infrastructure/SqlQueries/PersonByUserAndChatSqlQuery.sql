@@ -1,0 +1,1 @@
+SELECT * FROM Persons WHERE UserId=@UserId AND ChatId=@ChatId;

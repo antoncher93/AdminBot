@@ -1,0 +1,2 @@
+{"update_id":839361849,
+  "message":{"message_id":12,"from":{"id":816204353,"is_bot":false,"first_name":"\u0410\u043d\u0442\u043e\u043d","last_name":"\u0427\u0435\u0440\u043d\u043e\u043c\u0430\u0437\u043e\u0432","username":"anton_cher93","language_code":"en"},"chat":{"id":816204353,"first_name":"\u0410\u043d\u0442\u043e\u043d","last_name":"\u0427\u0435\u0440\u043d\u043e\u043c\u0430\u0437\u043e\u0432","username":"anton_cher93","type":"private"},"date":1666115767,"text":"/start","entities":[{"offset":0,"length":6,"type":"bot_command"}]}}
