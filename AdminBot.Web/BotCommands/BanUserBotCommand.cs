@@ -7,6 +7,8 @@ public class BanUserBotCommand
         long chatId,
         int blameMessageId,
         string username,
+        string firstName,
+        long senderId,
         DateTime executedAt)
     {
         UserId = userId;
@@ -14,11 +16,14 @@ public class BanUserBotCommand
         BlameMessageId = blameMessageId;
         Username = username;
         ExecutedAt = executedAt;
+        FirstName = firstName;
+        SenderId = senderId;
     }
     
     public interface IHandler
     {
-        Task HandleAsync(BanUserBotCommand command);
+        Task HandleAsync(
+            BanUserBotCommand command);
     }
     
     public long UserId { get; }
@@ -26,4 +31,6 @@ public class BanUserBotCommand
     public long ChatId { get; }
     public int BlameMessageId { get; }
     public DateTime ExecutedAt { get; }
+    public long SenderId { get; }
+    public string FirstName { get; }
 }

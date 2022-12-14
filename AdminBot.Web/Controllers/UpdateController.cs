@@ -18,9 +18,9 @@ public class UpdateController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] Update update)
     {
-        var receivedAt = DateTime.UtcNow;
-        
-        await _updateHandler.HandleAsync(update, receivedAt);
+        await _updateHandler
+            .HandleAsync(
+                update: update);
 
         return this.Ok();
     }

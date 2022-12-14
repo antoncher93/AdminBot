@@ -28,12 +28,14 @@ public class Sut
         long userId,
         long chatId,
         string userName,
+        string firstName,
         DateTime createdAt)
     {
         return _personsRepository.AddPersonAsync(
             userId: userId,
-            chatId: chatId,
             username: userName,
+            firstName: firstName,
+            chatId: chatId,
             createdAt: createdAt);
     }
 
@@ -122,12 +124,16 @@ public class Sut
     public async Task SaveChatSettingsAgreementAsync(
         long telegramChatId,
         string agreement,
+        int warnsLimit,
+        TimeSpan banTtl,
         DateTime dateTime)
     {
         await _chatSettingsRepository.SaveAgreementAsync(
             telegramId: telegramChatId,
             agreement: agreement,
-            dateTime: dateTime);
+            dateTime: dateTime,
+            warnsLimit: warnsLimit,
+            banTtl: banTtl);
     }
 
     private static string ToSqlFormat(DateTime dateTime)

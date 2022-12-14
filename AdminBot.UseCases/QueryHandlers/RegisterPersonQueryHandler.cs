@@ -14,7 +14,8 @@ namespace AdminBot.UseCases.QueryHandlers
             _persons = persons;
         }
 
-        public async Task<Person> HandleAsync(RegisterPersonQuery query)
+        public async Task<Person> HandleAsync(
+            RegisterPersonQuery query)
         {
             return await _persons.GetPersonAsync(
                            userId: query.UserId,
@@ -22,8 +23,9 @@ namespace AdminBot.UseCases.QueryHandlers
                        .ConfigureAwait(false)
                    ?? await _persons.AddPersonAsync(
                            userId: query.UserId,
-                           chatId: query.ChatId,
                            username: query.UserName,
+                           firstName: query.FirstName,
+                           chatId: query.ChatId,
                            createdAt: query.DateTime)
                        .ConfigureAwait(false);
         }

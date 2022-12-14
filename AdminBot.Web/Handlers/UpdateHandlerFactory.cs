@@ -3,6 +3,7 @@ using AdminBot.UseCases.CommandHandlers;
 using AdminBot.UseCases.Infrastructure;
 using AdminBot.UseCases.Infrastructure.Internal;
 using AdminBot.UseCases.Infrastructure.Repositories;
+using AdminBot.UseCases.Providers;
 using AdminBot.UseCases.QueryHandlers;
 using AdminBot.Web.Handlers.Internal;
 
@@ -10,12 +11,13 @@ namespace AdminBot.Web.Handlers;
 
 public static class UpdateHandlerFactory
 {
-    public static IUpdateHandler Create(
-        string sqlConnectionString,
+    public static IUpdateHandler Create(string sqlConnectionString,
         IBotClient botClient,
+        IDateTimeProvider dateTimeProvider,
         TimeSpan defaultBanTtl,
+        string botName,
         int defaultWarnsLimit,
-        string descriprionFilePath)
+        string descriptionFilePath)
     {
         var dbConnectionFactory = new SqlConnectionFactory(
             connectionString: sqlConnectionString);
@@ -24,14 +26,12 @@ public static class UpdateHandlerFactory
             sqlConnectionString: sqlConnectionString);
         
         var chatSettingsRepository = ChatSettingsRepositoryFactory.Create(
-            sqlConnectionString: sqlConnectionString,
-            defaultBanTtl: defaultBanTtl,
-            defaultWarnsLimit: defaultWarnsLimit);
+            sqlConnectionString: sqlConnectionString);
 
         var registerPersonQueryHandler = new RegisterPersonQueryHandler(
             persons: personsRepository);
 
-        var chatAgreementQueryHandler = new ChatAgreementQueryHandler(
+        var chatSettingsQueryHandler = new ChatSettingsQueryHandler(
             chatSettings: chatSettingsRepository);
 
         var isUserAdminQueryHandler = new IsUserAdminQueryHandler(
@@ -55,11 +55,13 @@ public static class UpdateHandlerFactory
             registerPersonQueryHandler: registerPersonQueryHandler,
             warnPersonCommandHandler: warnPersonCommandHandler,
             banPersonCommandHandler: banPersonCommandHandler,
-            chatSettingsQueryHandler: chatAgreementQueryHandler,
+            chatSettingsQueryHandler: chatSettingsQueryHandler,
+            isUserAdminHandler: isUserAdminQueryHandler,
             defaultWarnsLimit: defaultWarnsLimit);
 
         var banUserBotCommandHandler = new BanUserInChatBotCommandHandler(
             registerPersonQueryHandler: registerPersonQueryHandler,
+            isUserAdminCommandHandler: isUserAdminQueryHandler,
             banPersonCommandHandler: banPersonCommandHandler);
         
         var saveChatAgreementCommandHandler = new SaveChatAgreementCommandHandler(
@@ -67,16 +69,19 @@ public static class UpdateHandlerFactory
             botClient: botClient);
 
         var setChatSettingsBotCommandHandler = new SetChatAgreementBotCommandHandler(
-            saveChatSettingsCommandHandler: saveChatAgreementCommandHandler);
+            saveChatSettingsCommandHandler: saveChatAgreementCommandHandler,
+            defaultBanTtl: defaultBanTtl, isUserAdminQueryHandler: isUserAdminQueryHandler,
+            chatSettingsQueryHandler: chatSettingsQueryHandler,
+            defaultWarnsLimit: defaultWarnsLimit);
 
         var botCommandUpdateHandler = new BotCommandMessageHandler(
-            isUserAdminQueryHandler: isUserAdminQueryHandler,
             warnUserBotCommandHandler: warnUserBotCommandHandler,
             banUserBotCommandHandler: banUserBotCommandHandler,
+            botName: botName,
             setChatAgreementBotCommandHandler: setChatSettingsBotCommandHandler,
             showDescriptionCommandHandler: new ShowDescriptionCommandHandler(
                 botClient: botClient,
-                descriptionFilePath: descriprionFilePath));
+                descriptionFilePath: descriptionFilePath));
 
         var welcomePersonCommandHandler = new WelcomePersonCommandHandler(
             botClient: botClient);
@@ -85,9 +90,10 @@ public static class UpdateHandlerFactory
             botCommandMessageHandler: botCommandUpdateHandler,
             registerPersonCommandHandler: registerPersonQueryHandler,
             welcomePersonCommandHandler: welcomePersonCommandHandler,
-            chatSettingsQueryHandler: chatAgreementQueryHandler);
+            chatSettingsQueryHandler: chatSettingsQueryHandler);
 
         return new UpdateHandler(
+            dateTimeProvider: dateTimeProvider,
             messageHandler: messageUpdateHandler,
             callbackQueryHandler: new CallbackQueryHandler(
                 botClient: botClient));

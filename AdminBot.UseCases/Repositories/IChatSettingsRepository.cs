@@ -9,8 +9,11 @@ namespace AdminBot.UseCases.Repositories
         Task SaveAgreementAsync(
             long telegramId,
             string agreement,
+            TimeSpan banTtl,
+            int warnsLimit,
             DateTime dateTime);
 
-        Task<ChatSettings> FindAsync(long chatId);
+        Task<ChatSettings> FindAsync(
+            long chatId);
     }
 }

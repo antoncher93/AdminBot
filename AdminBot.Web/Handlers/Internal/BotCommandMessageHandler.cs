@@ -7,125 +7,98 @@ namespace AdminBot.Web.Handlers.Internal;
 
 internal class BotCommandMessageHandler : IBotCommandMessageHandler
 {
+    private readonly string _botName;
     private readonly WarnUserBotCommand.IHandler _warnUserBotCommandHandler;
     private readonly BanUserBotCommand.IHandler _banUserBotCommandHandler;
     private readonly SetChatAgreementBotCommand.IHandler _setChatAgreementBotCommandHandler;
-    private readonly IsUserAdminQuery.IHandler _isUserAdminQueryHandler;
-    private readonly ShowDescriptionCommand.IHandler _showDescriptionCommandHandler;
+    private readonly StartBotCommandCommand.IHandler _showDescriptionCommandHandler;
 
     public BotCommandMessageHandler(
         WarnUserBotCommand.IHandler warnUserBotCommandHandler,
         BanUserBotCommand.IHandler banUserBotCommandHandler,
         SetChatAgreementBotCommand.IHandler setChatAgreementBotCommandHandler,
-        IsUserAdminQuery.IHandler isUserAdminQueryHandler,
-        ShowDescriptionCommand.IHandler showDescriptionCommandHandler)
+        StartBotCommandCommand.IHandler showDescriptionCommandHandler,
+        string botName)
     {
         _warnUserBotCommandHandler = warnUserBotCommandHandler;
         _banUserBotCommandHandler = banUserBotCommandHandler;
         _setChatAgreementBotCommandHandler = setChatAgreementBotCommandHandler;
-        _isUserAdminQueryHandler = isUserAdminQueryHandler;
         _showDescriptionCommandHandler = showDescriptionCommandHandler;
+        _botName = botName;
     }
 
-    public async Task HandleAsync(string command,
+    public async Task HandleAsync(
+        string command,
         Message message,
         DateTime receivedAt)
     {
-        switch (command)
+        if (this.IsEqualsCommand(
+                input: command,
+                knownCommand: "/start"))
         {
-            case "/start":
+            await _showDescriptionCommandHandler
+                .HandleAsync(
+                    commandCommand: new StartBotCommandCommand(
+                        chatId: message.Chat.Id));
+        }
+        else if (this.IsEqualsCommand(
+                     input: command,
+                     knownCommand: "/warn"))
+        {
+            if (message.ReplyToMessage != null)
             {
-                await _showDescriptionCommandHandler
+                await _warnUserBotCommandHandler
                     .HandleAsync(
-                        command: new ShowDescriptionCommand(
-                            chatId: message.Chat.Id));
-                break;
+                        command: new WarnUserBotCommand(
+                            userId: message.ReplyToMessage.From.Id,
+                            senderId: message.From.Id,
+                            chatId: message.Chat.Id,
+                            username: message.ReplyToMessage.From.Username,
+                            firstName: message.ReplyToMessage.From.FirstName,
+                            blameMessageId: message.ReplyToMessage.MessageId,
+                            executedAt: receivedAt));    
             }
-            case "/warn":
+        }
+        else if (this.IsEqualsCommand(
+                     input: command,
+                     knownCommand: "/ban"))
+        {
+            if (message.ReplyToMessage != null)
             {
-                var isUserAdmin = await _isUserAdminQueryHandler
+                await _banUserBotCommandHandler
                     .HandleAsync(
-                        query: new IsUserAdminQuery(
-                            userId: message.From.Id,
-                            chatId: message.Chat.Id));
-                
-                if (!isUserAdmin)
-                {
-                    return;
-                }
-                
-                if (message.ReplyToMessage is null)
-                {
-                    break;
-                }
-
-                await _warnUserBotCommandHandler.HandleAsync(
-                    command: new WarnUserBotCommand(
-                        userId: message.ReplyToMessage.From.Id,
-                        chatId: message.Chat.Id,
-                        username: message.ReplyToMessage.From.Username,
-                        blameMessageId: message.ReplyToMessage.MessageId,
-                        executedAt: receivedAt));
-                
-                break;
+                        command: new BanUserBotCommand(
+                            userId: message.ReplyToMessage.From.Id,
+                            chatId: message.Chat.Id,
+                            username: message.ReplyToMessage.From.Username,
+                            firstName: message.ReplyToMessage.From.FirstName,
+                            blameMessageId: message.ReplyToMessage.MessageId,
+                            senderId: message.From.Id,
+                            executedAt: receivedAt));
             }
-
-            case "/ban":
+        }
+        else if (this.IsEqualsCommand(
+                      input: command,
+                      knownCommand: "/setAgreement"))
+        {
+            if (message.ReplyToMessage != null)
             {
-                var isUserAdmin = await _isUserAdminQueryHandler
-                    .HandleAsync(
-                        query: new IsUserAdminQuery(
-                            userId: message.From.Id,
-                            chatId: message.Chat.Id));
-                
-                if (!isUserAdmin)
-                {
-                    return;
-                }
-                
-                if (message.ReplyToMessage?.From is null)
-                {
-                    break;
-                }
-
-                await _banUserBotCommandHandler.HandleAsync(
-                    command: new BanUserBotCommand(
-                        userId: message.ReplyToMessage.From.Id,
-                        chatId: message.Chat.Id,
-                        username: message.ReplyToMessage.From.Username,
-                        blameMessageId: message.ReplyToMessage.MessageId,
-                        executedAt: receivedAt));
-                
-                break;
-            }
-            case "/setAgreement":
-            {
-                var isUserAdmin = await _isUserAdminQueryHandler
-                    .HandleAsync(
-                        query: new IsUserAdminQuery(
-                            userId: message.From.Id,
-                            chatId: message.Chat.Id));
-                
-                if (!isUserAdmin)
-                {
-                    return;
-                }
-                
-                if (message.ReplyToMessage is null)
-                {
-                    break;
-                }
-
                 await _setChatAgreementBotCommandHandler
                     .HandleAsync(
                         command: new SetChatAgreementBotCommand(
                             chatId: message.Chat.Id,
-                            fromUserId: message.From.Id,
+                            senderId: message.From.Id,
                             agreementText: message.ReplyToMessage.Text,
                             requestedAt: receivedAt));
-                
-                break;
             }
         }
+    }
+
+    private bool IsEqualsCommand(
+        string input,
+        string knownCommand)
+    {
+        return input == knownCommand
+               || input == $"{knownCommand}@{_botName}";
     }
 }

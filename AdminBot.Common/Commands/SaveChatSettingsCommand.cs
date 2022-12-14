@@ -8,11 +8,15 @@ namespace AdminBot.Common.Commands
         public SaveChatSettingsCommand(
             long telegramId,
             string agreement,
+            int warnsLimit,
+            TimeSpan banTtl,
             DateTime executedAt)
         {
             TelegramId = telegramId;
             Agreement = agreement;
             ExecutedAt = executedAt;
+            WarnsLimit = warnsLimit;
+            BanTtl = banTtl;
         }
         
         public interface IHandler
@@ -25,5 +29,9 @@ namespace AdminBot.Common.Commands
         public string Agreement { get; }
         
         public DateTime ExecutedAt { get; }
+        
+        public int WarnsLimit { get; }
+        
+        public TimeSpan BanTtl { get; }
     }
 }

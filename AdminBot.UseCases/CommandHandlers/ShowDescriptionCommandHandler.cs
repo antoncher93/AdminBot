@@ -6,7 +6,7 @@ using AdminBot.UseCases.Clients;
 
 namespace AdminBot.UseCases.CommandHandlers
 {
-    public class ShowDescriptionCommandHandler : ShowDescriptionCommand.IHandler
+    public class ShowDescriptionCommandHandler : StartBotCommandCommand.IHandler
     {
         private readonly string _descriptionFilePath;
         private readonly IBotClient _botClient;
@@ -19,7 +19,7 @@ namespace AdminBot.UseCases.CommandHandlers
             _descriptionFilePath = descriptionFilePath;
         }
 
-        public async Task HandleAsync(ShowDescriptionCommand command)
+        public async Task HandleAsync(StartBotCommandCommand commandCommand)
         {
             var description = System.IO.File.ReadAllText(
                 path: _descriptionFilePath,
@@ -27,7 +27,7 @@ namespace AdminBot.UseCases.CommandHandlers
 
             await _botClient
                 .SendMessageAsync(
-                    chatId: command.ChatId,
+                    chatId: commandCommand.ChatId,
                     message: new DescriptionMessage(
                         description: description));
         }

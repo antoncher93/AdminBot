@@ -38,7 +38,9 @@ namespace AdminBot.UseCases.Infrastructure.DataModels
         public int Warns { get; set; }
         
         public DateTime CreatedAt { get; set; }
+        
         public DateTime UpdatedAt { get; set; }
         
+        public string FirstName { get; set; }
     }
 }

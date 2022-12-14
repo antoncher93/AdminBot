@@ -10,6 +10,7 @@ public class WarnUserBotCommandHandler : WarnUserBotCommand.IHandler
     private readonly WarnPersonCommand.IHandler _warnPersonCommandHandler;
     private readonly BanPersonCommand.IHandler _banPersonCommandHandler;
     private readonly ChatSettingsQuery.IHandler _chatSettingsQueryHandler;
+    private readonly IsUserAdminQuery.IHandler _isUserAdminHandler;
     private readonly int _defaultWarnsLimit;
 
     public WarnUserBotCommandHandler(
@@ -17,23 +18,37 @@ public class WarnUserBotCommandHandler : WarnUserBotCommand.IHandler
         WarnPersonCommand.IHandler warnPersonCommandHandler,
         BanPersonCommand.IHandler banPersonCommandHandler,
         ChatSettingsQuery.IHandler chatSettingsQueryHandler,
+        IsUserAdminQuery.IHandler isUserAdminHandler,
         int defaultWarnsLimit)
     {
         _registerPersonQueryHandler = registerPersonQueryHandler;
         _warnPersonCommandHandler = warnPersonCommandHandler;
-        this._banPersonCommandHandler = banPersonCommandHandler;
+        _banPersonCommandHandler = banPersonCommandHandler;
         _chatSettingsQueryHandler = chatSettingsQueryHandler;
         _defaultWarnsLimit = defaultWarnsLimit;
+        _isUserAdminHandler = isUserAdminHandler;
     }
 
     public async Task HandleAsync(WarnUserBotCommand command)
     {
+        var isUserAdmin = await _isUserAdminHandler
+            .HandleAsync(
+                query: new IsUserAdminQuery(
+                    userId: command.SenderId,
+                    chatId: command.ChatId));
+
+        if (!isUserAdmin)
+        {
+            return;
+        }
+        
         var person = await _registerPersonQueryHandler
             .HandleAsync(
                 query: new RegisterPersonQuery(
                     userId: command.UserId,
                     chatId: command.ChatId,
                     userName: command.Username,
+                    firstName: command.FirstName,
                     dateTime: command.ExecutedAt))
             .ConfigureAwait(false);
         
@@ -57,12 +72,13 @@ public class WarnUserBotCommandHandler : WarnUserBotCommand.IHandler
         }
         else
         {
-            await _warnPersonCommandHandler.HandleAsync(
-                command: new WarnPersonCommand(
-                    person: person,
-                    warnsLimit: warnsLimit,
-                    messageId: command.BlameMessageId,
-                    requestTime: command.ExecutedAt))
+            await _warnPersonCommandHandler
+                .HandleAsync(
+                    command: new WarnPersonCommand(
+                        person: person,
+                        warnsLimit: warnsLimit,
+                        messageId: command.BlameMessageId,
+                        requestTime: command.ExecutedAt))
                 .ConfigureAwait(false);
         }
     }

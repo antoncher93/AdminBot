@@ -8,6 +8,7 @@ namespace AdminBot.Common
             int id,
             long userId,
             string username,
+            string firstName,
             long chatId,
             DateTime createdAt,
             int warns,
@@ -20,6 +21,7 @@ namespace AdminBot.Common
             CreatedAt = createdAt;
             Warns = warns;
             UpdatedAt = updatedAt;
+            FirstName = firstName;
         }
         
         public int Id { get; }
@@ -28,11 +30,20 @@ namespace AdminBot.Common
         
         public string Username { get; }
         
+        
+        public string FirstName { get; }
+        
         public long ChatId { get; }
         
         public DateTime CreatedAt { get; }
+        
         public DateTime UpdatedAt { get; }
         
         public int Warns { get; }
+
+        public string GetUserOrFirstName()
+        {
+            return Username ?? FirstName;
+        }
     }
 }

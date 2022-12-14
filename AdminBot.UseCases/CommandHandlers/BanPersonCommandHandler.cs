@@ -63,8 +63,9 @@ namespace AdminBot.UseCases.CommandHandlers
             await _botClient
                 .SendMessageAsync(
                     message: new BanPersonMessage(
-                        person: updatedPerson,
                         blameMessageId: command.MessageId,
+                        userId: updatedPerson.UserId,
+                        userName: updatedPerson.FirstName,
                         expireAt: expireAt),
                     chatId: command.Person.ChatId);
         }

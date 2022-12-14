@@ -4,5 +4,5 @@ namespace AdminBot.Web.Handlers;
 
 public interface IUpdateHandler
 {
-    Task HandleAsync(Update update, DateTime receivedAt);
+    Task HandleAsync(Update update);
 }

@@ -12,10 +12,10 @@ namespace AdminBot.UseCases.Repositories
             long chatId,
             CancellationToken token = default);
 
-        Task<Person> AddPersonAsync(
-            long userId,
-            long chatId,
+        Task<Person> AddPersonAsync(long userId,
             string username,
+            string firstName,
+            long chatId,
             DateTime createdAt);
         
         Task<int> IncrementWarnsAsync(

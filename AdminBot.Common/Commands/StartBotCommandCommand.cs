@@ -2,16 +2,16 @@
 
 namespace AdminBot.Common.Commands;
 
-public class ShowDescriptionCommand
+public class StartBotCommandCommand
 {
-    public ShowDescriptionCommand(long chatId)
+    public StartBotCommandCommand(long chatId)
     {
         ChatId = chatId;
     }
     
     public interface IHandler
     {
-        Task HandleAsync(ShowDescriptionCommand command);
+        Task HandleAsync(StartBotCommandCommand commandCommand);
     }
     public long ChatId { get; }
 }

@@ -36,9 +36,10 @@ public class MessageHandlerTests
         await sut.SetChatSettingsAsync(
             chatId: chatId,
             agreement: agreement,
-            dateTime: dateTime);
+            warnsLimit: Gen.RandomInt(10),
+            banTtl: Gen.RandomTimeSpan());
 
-        await sut.HandleUpdateAsync(update, dateTime);
+        await sut.HandleUpdateAsync(update);
 
         var expectedRestrictedUserIds = newUsers
             .Select(user => user.Id)
@@ -84,9 +85,10 @@ public class MessageHandlerTests
         await sut.SetChatSettingsAsync(
             chatId: chatId,
             agreement: Gen.RandomString(),
-            dateTime: DateTime.Today);
+            warnsLimit: Gen.RandomInt(),
+            banTtl: Gen.RandomTimeSpan());
 
-        await sut.HandleUpdateAsync(update, dateTime);
+        await sut.HandleUpdateAsync(update);
         
         var restrictedUsersBefore = sut.GetRestrictedUsers(chatId);
 
@@ -105,8 +107,7 @@ public class MessageHandlerTests
             chatId: chatId);
 
         await sut.HandleUpdateAsync(
-            update: callbackQueryUpdate, 
-            dateTime: dateTime + TimeSpan.FromHours(1));
+            update: callbackQueryUpdate);
 
         var restrictedUsersAfter = sut.GetRestrictedUsers(chatId);
 
@@ -124,8 +125,6 @@ public class MessageHandlerTests
     {
         var sut = SutFactory.Create();
 
-        var dateTime = DateTime.UtcNow;
-        
         var chatId = Gen.RandomLong();
 
         var user = ObjectsGen.CreateUser(
@@ -147,8 +146,7 @@ public class MessageHandlerTests
             chatId: chatId);
 
         await sut.HandleUpdateAsync(
-            update: callbackQueryUpdate, 
-            dateTime: dateTime + TimeSpan.FromHours(1));
+            update: callbackQueryUpdate);
 
         sut.GetDeletedMessages(chatId)
             .Should()
@@ -159,6 +157,4 @@ public class MessageHandlerTests
                 });
 
     }
-    
-    
 }

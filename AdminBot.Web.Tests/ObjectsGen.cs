@@ -114,22 +114,25 @@ public static class ObjectsGen
             userId: Gen.RandomLong(),
             chatId: Gen.RandomLong(),
             username: Gen.RandomString(),
+            firstName: Gen.RandomString(),
             warns: 0,
             createdAt: DateTime.Now,
             updatedAt: DateTime.Now);
     }
 
-    public static ChatSettings CreateRandomChatSettings()
+    public static ChatSettings CreateRandomChatSettings(
+        DateTime createdAt)
     {
         return new ChatSettings(
             telegramId: Gen.RandomLong(),
             agreement: Gen.RandomString(),
             warnsLimit: Gen.RandomInt(0, 10),
             banTtl: TimeSpan.FromHours(Gen.RandomInt(0, 999)),
-            createdAt: DateTime.Now);
+            createdAt: createdAt);
     }
 
-    public static Ban CreateRandomBan(Person person)
+    public static Ban CreateRandomBan(
+        Person person)
     {
         return new Ban(
             person: person,

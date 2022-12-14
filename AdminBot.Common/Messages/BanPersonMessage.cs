@@ -5,17 +5,20 @@ namespace AdminBot.Common.Messages
     public class BanPersonMessage : IMessage
     {
         public BanPersonMessage(
-            Person person,
             int blameMessageId,
+            string userName,
+            long userId,
             DateTime expireAt)
         {
             BlameMessageId = blameMessageId;
             ExpireAt = expireAt;
-            Person = person;
+            UserId = userId;
+            UserName = userName;
         }
         
-        public Person Person { get; }
         public int BlameMessageId { get; }
         public DateTime ExpireAt { get; }
+        public string UserName { get; }
+        public long UserId { get; }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using AdminBot.UseCases.Clients;
 using AdminBot.UseCases.Infrastructure.Clients;
+using AdminBot.UseCases.Infrastructure.Providers;
+using AdminBot.UseCases.Providers;
 using AdminBot.Web.Handlers;
 using AdminBot.Web.Middlewares;
 using Serilog;
@@ -11,7 +13,9 @@ public static class ApplicationRoot
     public static void ConfigureServices(IServiceCollection services,
         string sqlConnectionString,
         IBotClient botClient,
+        IDateTimeProvider dateTimeProvider,
         TimeSpan defaultBanTtl,
+        string botName,
         int defaultWarnsLimit,
         string descriptionFilePath)
     {
@@ -25,6 +29,8 @@ public static class ApplicationRoot
         services.AddUpdateHandler(
             sqlConnectionString: sqlConnectionString,
             botClient: botClient,
+            dateTimeProvider: dateTimeProvider,
+            botName: botName,
             defaultBanTtl: defaultBanTtl,
             defaultWarnsLimit: defaultWarnsLimit,
             descriptionFilePath: descriptionFilePath);
@@ -44,7 +50,7 @@ public static class ApplicationRoot
             .Build()
             .Get<AppConfig>();
 
-        var botClient = BotClientFactory.Create(appConfig.TelegramBotToken);
+        var botClient = BotClientFactory.Create(appConfig.TelegramBotTokenDev);
         
         botClient.SetWebHook(appConfig.WebHookUrl);
         
@@ -53,6 +59,8 @@ public static class ApplicationRoot
         ConfigureServices(builder.Services,
             sqlConnectionString: appConfig.ProdSqlConnectionString,
             botClient: botClient,
+            dateTimeProvider: new DateTimeProvider(),
+            botName: appConfig.BotName,
             defaultBanTtl: appConfig.DefaultBanTtl,
             defaultWarnsLimit: appConfig.DefaultWarnsLimit,
             descriptionFilePath: appConfig.DescriptionFilePath);

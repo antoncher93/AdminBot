@@ -48,7 +48,7 @@
         <Compile Include="ChatSettings.cs" />
         <Compile Include="Commands\BanPersonCommand.cs" />
         <Compile Include="Commands\SaveChatSettingsCommand.cs" />
-        <Compile Include="Commands\ShowDescriptionCommand.cs" />
+        <Compile Include="Commands\StartBotCommandCommand.cs" />
         <Compile Include="Commands\WarnPersonCommand.cs" />
         <Compile Include="Commands\WelcomePersonCommand.cs" />
         <Compile Include="Messages\BanPersonMessage.cs" />

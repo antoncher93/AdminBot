@@ -21,15 +21,19 @@ namespace AdminBot.UseCases.CommandHandlers
 
         public async Task HandleAsync(SaveChatSettingsCommand command)
         {
-            await _chatSettings.SaveAgreementAsync(
-                telegramId: command.TelegramId,
-                agreement: command.Agreement,
-                dateTime: command.ExecutedAt);
+            await _chatSettings
+                .SaveAgreementAsync(
+                    telegramId: command.TelegramId,
+                    agreement: command.Agreement,
+                    dateTime: command.ExecutedAt,
+                    warnsLimit: command.WarnsLimit,
+                    banTtl: command.BanTtl);
 
-            await _botClient.SendMessageAsync(
-                message: new ChatRulesHasBeenChangedMessage(
-                    agreement: command.Agreement),
-                chatId: command.TelegramId);
+            await _botClient
+                .SendMessageAsync(
+                    message: new ChatRulesHasBeenChangedMessage(
+                        agreement: command.Agreement),
+                    chatId: command.TelegramId);
         }
     }
 }

@@ -19,22 +19,20 @@ namespace AdminBot.UseCases.CommandHandlers
             _personsRepository = personsRepository;
         }
 
-        public async Task HandleAsync(WarnPersonCommand command)
+        public async Task HandleAsync(
+            WarnPersonCommand command)
         {
-            var warns = await _personsRepository
-                .IncrementWarnsAsync(
-                    person: command.Person,
-                    dateTime: command.RequestTime)
-                .ConfigureAwait(false);
-
-            var updatedPerson = await _personsRepository.GetPersonAsync(
-                userId: command.Person.UserId,
-                chatId: command.Person.ChatId);
-
-            await _botClient.SendMessageAsync(
+            var warns = await _personsRepository.IncrementWarnsAsync(
+                person: command.Person,
+                command.RequestTime);
+            
+            await _botClient
+                .SendMessageAsync(
                     message: new WarnPersonMessage(
-                        person: updatedPerson,
                         warnsLimit: command.WarnsLimit,
+                        warns: warns,
+                        userId: command.Person.UserId,
+                        userName: command.Person.GetUserOrFirstName(),
                         blameMessageId: command.MessageId),
                     chatId: command.Person.ChatId)
                 .ConfigureAwait(false);
