@@ -3,17 +3,23 @@
     public class WarnPersonMessage : IMessage
     {
         public WarnPersonMessage(
-            Person person,
             int? blameMessageId,
+            string userName,
+            long userId,
+            int warns,
             int warnsLimit)
         {
             BlameMessageId = blameMessageId;
             WarnsLimit = warnsLimit;
-            Person = person;
+            Warns = warns;
+            UserId = userId;
+            UserName = userName;
         }
         
-        public Person Person  { get; }
         public int? BlameMessageId { get; }
         public int WarnsLimit { get; }
+        public string UserName { get; }
+        public long UserId { get; }
+        public int Warns { get; }
     }
 }

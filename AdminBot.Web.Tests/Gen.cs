@@ -38,4 +38,9 @@ public static class Gen
 
         return result;
     }
+
+    public static TimeSpan RandomTimeSpan()
+    {
+        return TimeSpan.FromSeconds(Gen.RandomInt(0, 9999));
+    }
 }

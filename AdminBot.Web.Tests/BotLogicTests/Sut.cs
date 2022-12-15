@@ -2,6 +2,7 @@
 using AdminBot.Common.Commands;
 using AdminBot.Common.Messages;
 using AdminBot.Common.Queries;
+using AdminBot.UseCases.Providers;
 using AdminBot.UseCases.Repositories;
 using AdminBot.Web.Handlers;
 using AdminBot.Web.Tests.Fakes;
@@ -9,7 +10,7 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using Telegram.Bot.Types;
 
-namespace AdminBot.Web.Tests.BotCommandsTests;
+namespace AdminBot.Web.Tests.BotLogicTests;
 
 public class Sut
 {
@@ -18,6 +19,7 @@ public class Sut
     private readonly ChatSettingsQuery.IHandler _chatAgreementQueryHandler;
     private readonly IPersonsRepository _personsRepository;
     private readonly SaveChatSettingsCommand.IHandler _saveChatSettingsCommandHandler;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     public Sut(
         IUpdateHandler updateHandler,
@@ -25,14 +27,15 @@ public class Sut
         ChatSettingsQuery.IHandler chatAgreementQueryHandler,
         IPersonsRepository personsRepository,
         SaveChatSettingsCommand.IHandler saveChatSettingsCommandHandler,
-        int defaultWarnsLimit,
-        TimeSpan defaultBanTtl)
+        IDateTimeProvider dateTimeProvider,
+        int defaultWarnsLimit, TimeSpan defaultBanTtl)
     {
         _updateHandler = updateHandler;
         _fakeBotClient = fakeBotClient;
         _chatAgreementQueryHandler = chatAgreementQueryHandler;
         DefaultWarnsLimit = defaultWarnsLimit;
         DefaultBanTtl = defaultBanTtl;
+        _dateTimeProvider = dateTimeProvider;
         _saveChatSettingsCommandHandler = saveChatSettingsCommandHandler;
         _personsRepository = personsRepository;
     }
@@ -41,10 +44,11 @@ public class Sut
     public TimeSpan DefaultBanTtl { get; }
 
     public Task HandleUpdateAsync(
-        Update update,
-        DateTime dateTime)
+        Update update)
     {
-        return _updateHandler.HandleAsync(update, dateTime);
+        return _updateHandler
+            .HandleAsync(
+                update: update);
     }
     
     public void AssertChatMessages(
@@ -114,13 +118,45 @@ public class Sut
     public Task SetChatSettingsAsync(
         long chatId,
         string agreement,
-        DateTime dateTime)
+        int warnsLimit,
+        TimeSpan banTtl)
     {
         return _saveChatSettingsCommandHandler
             .HandleAsync(
                 command: new SaveChatSettingsCommand(
                     telegramId: chatId,
                     agreement: agreement,
-                    executedAt: dateTime));
+                    warnsLimit: warnsLimit,
+                    banTtl: banTtl,
+                    executedAt: _dateTimeProvider.GetDateTimeNow()));
+    }
+
+    public DateTime GetProvidedDateTime()
+    {
+        return _dateTimeProvider.GetDateTimeNow();
+    }
+
+    public async Task SetupPersonAsync(
+        long userId,
+        long chatId,
+        string? userName,
+        string firstName,
+        int warns,
+        DateTime createdAt,
+        DateTime updatedAt)
+    {
+        var person = await _personsRepository.AddPersonAsync(
+            userId: userId,
+            username: userName,
+            firstName: firstName,
+            chatId: chatId, createdAt: createdAt);
+
+        for (int i = 0; i < warns; i++)
+        {
+            await _personsRepository
+                .IncrementWarnsAsync(
+                    person: person,
+                    dateTime: updatedAt);
+        }
     }
 }

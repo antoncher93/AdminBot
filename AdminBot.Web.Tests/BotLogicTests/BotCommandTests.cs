@@ -1,20 +1,17 @@
 ﻿using AdminBot.Common;
 using AdminBot.Common.Messages;
-using AdminBot.Web.Tests.BotLogicTests;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
 
-namespace AdminBot.Web.Tests.BotCommandsTests;
+namespace AdminBot.Web.Tests.BotLogicTests;
 
 public class BotCommandTests
 {
     [Fact]
-    public async Task WarnsCommandSendsMessage()
+    public async Task WarnsBotCommandSendsMessage()
     {
         var sut = SutFactory.Create();
-
-        var dateTime = DateTime.UtcNow;
 
         var chatId = Gen.RandomLong();
 
@@ -41,63 +38,38 @@ public class BotCommandTests
             from: admin,
             replyToMessage: messageForWarn);
 
-        await sut.HandleUpdateAsync(warnMessageUpdate, dateTime);
+        await sut.HandleUpdateAsync(warnMessageUpdate);
 
-        var expectedPerson = new Person(
-            id: Gen.RandomInt(),
+        var expectedMessage = new WarnPersonMessage(
+            blameMessageId: messageForWarn.MessageId,
+            userName: user.Username,
             userId: user.Id,
-            username: user.Username,
-            chatId: chatId,
-            createdAt: dateTime,
-            updatedAt: dateTime,
-            warns: 1);
+            warns: 1,
+            warnsLimit: sut.DefaultWarnsLimit);
         
         var actualMessages = sut.GetBotMessages(chatId);
 
         actualMessages
+            .Single()
             .Should()
-            .HaveCount(1);
-
-        actualMessages[0]
-            .Should()
-            .BeOfType<WarnPersonMessage>();
-
-        var actualMessage = actualMessages[0] as WarnPersonMessage;
-
-        actualMessage.Person
-            .Should()
-            .BeEquivalentTo(
-                expectation: expectedPerson,
-                config: options => options
-                    .Excluding(person => person.Id)
-                    .Using<DateTime>(ctx
-                            => ctx.Subject
-                                .Should()
-                                .BeCloseTo(ctx.Expectation, 1.Seconds()))
-                        .WhenTypeIs<DateTime>());
-
-        var actualPerson = await sut.FindPerson(user.Id, chatId);
-
-        actualPerson.Should()
-            .NotBeNull();
-
-        actualPerson.Warns.Should().Be(1);
+            .BeEquivalentTo(expectedMessage);
     }
 
-    [Fact]
-    public async Task WarnRestrictsPersonWhenWarnLimitExceeded()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("TestUserName")]
+    public async Task WarnBotCommandRestrictsPersonWhenWarnLimitExceeded(
+        string userName)
     {
         var sut = SutFactory.Create();
 
-        var dateTime = DateTime.UtcNow;
-
+        var dateTime = DateTime.Today;
+        var warns = Gen.RandomInt(5);
         var chatId = Gen.RandomLong();
 
         var user = ObjectsGen.CreateUser(
             userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-
-        var person = ObjectsGen.CreateRandomPerson();
+            username: userName);
 
         var messageForWarn = ObjectsGen.CreateMessage(
             messageId: Gen.RandomInt(),
@@ -111,6 +83,21 @@ public class BotCommandTests
         
         sut.AddChatAdmin(admin, chatId);
 
+        await sut.SetupPersonAsync(
+            userId: user.Id,
+            chatId: chatId,
+            userName: user.Username,
+            firstName: user.FirstName,
+            warns: warns,
+            createdAt: dateTime,
+            updatedAt: dateTime);
+
+        await sut.SetChatSettingsAsync(
+            chatId: chatId,
+            agreement: Gen.RandomString(),
+            warnsLimit: warns,
+            banTtl: Gen.RandomTimeSpan());
+
         var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
             messageId: Gen.RandomInt(),
             text: "/warn",
@@ -118,13 +105,22 @@ public class BotCommandTests
             from: admin,
             replyToMessage: messageForWarn);
 
-        await sut.HandleUpdateAsync(warnMessageUpdate, dateTime);
+        await sut.HandleUpdateAsync(warnMessageUpdate);
+
+        sut.GetRestrictedUsers(chatId)
+            .Single()
+            .Should()
+            .Be(user.Id);
     }
     
-    [Fact]
-    public async Task BanCommandRestrictsUser()
+    [Theory]
+    [InlineData("/ban")]
+    [InlineData("/ban@test_bot")]
+    public async Task BanCommandRestrictsUser(
+        string command)
     {
-        var sut = SutFactory.Create();
+        var sut = SutFactory.Create(
+            botName: "test_bot");
 
         var chatId = Gen.RandomLong();
 
@@ -146,49 +142,18 @@ public class BotCommandTests
 
         var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
             messageId: Gen.RandomInt(),
-            text: "/ban",
+            text: command,
             chatId: chatId,
             from: admin,
             replyToMessage: messageForBan);
 
-        var dateTime = DateTime.UtcNow;
-        
-        await sut.HandleUpdateAsync(warnMessageUpdate, dateTime);
-
-        var expiredAt = dateTime + sut.DefaultBanTtl;
+        await sut.HandleUpdateAsync(warnMessageUpdate);
 
         var actualMessages = sut.GetBotMessages(chatId);
 
         actualMessages
             .Should()
             .HaveCount(1);
-
-        var actualMessage = actualMessages[0] as BanPersonMessage;
-
-        var expectedPerson = new Person(
-            id: Gen.RandomInt(),
-            userId: user.Id,
-            chatId: chatId,
-            username: user.Username,
-            warns: 0,
-            createdAt: dateTime,
-            updatedAt: dateTime);
-
-        actualMessage.ExpireAt
-            .Should()
-            .BeCloseTo(expiredAt, TimeSpan.FromSeconds(1));
-
-        actualMessage.Person
-            .Should()
-            .BeEquivalentTo(
-                expectation: expectedPerson,
-                config: options => options
-                    .Excluding(person => person.Id)
-                    .Using<DateTime>(ctx
-                        => ctx.Subject
-                            .Should()
-                            .BeCloseTo(ctx.Expectation, 1.Seconds()))
-                    .WhenTypeIs<DateTime>());
 
         sut.GetRestrictedUsers(chatId)
             .Should()
@@ -198,14 +163,20 @@ public class BotCommandTests
             .Be(user.Id);
     }
 
-    [Fact]
-    public async Task SetChatAgreementCreatesSettings()
+    [Theory]
+    [InlineData("/setAgreement")]
+    [InlineData("/setAgreement@test_bot")]
+    public async Task SetChatAgreementCreatesSettings(
+        string command)
     {
-        var sut = SutFactory.Create();
+        var sut = SutFactory.Create(
+            botName: "test_bot");
+
+        var dateTime = sut.GetProvidedDateTime();
 
         var chatId = Gen.RandomLong();
         
-        var admin =    ObjectsGen.CreateUser(
+        var admin = ObjectsGen.CreateUser(
             userId: Gen.RandomLong(),
             username: Gen.RandomString());
         
@@ -221,44 +192,39 @@ public class BotCommandTests
 
         var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
             messageId: Gen.RandomInt(),
-            text: "/setAgreement",
+            text: command,
             chatId: chatId,
             from: admin,
             replyToMessage: messageWithAgreement);
 
-        var dateTime = DateTime.UtcNow;
-        
-        await sut.HandleUpdateAsync(warnMessageUpdate, dateTime);
+        await sut.HandleUpdateAsync(warnMessageUpdate);
         
         sut.AssertChatMessages(
             chatId: chatId,
             new ChatRulesHasBeenChangedMessage(
                 agreement: agreement));
 
-        var expectedChatAgreement = new ChatSettings(
+        var expectedChatSettings = new ChatSettings(
             telegramId: chatId,
             agreement: agreement,
-            warnsLimit: 2,
+            warnsLimit: sut.DefaultWarnsLimit,
             banTtl: sut.DefaultBanTtl,
             createdAt: dateTime);
 
         var actual = await sut.FindChatAgreementAsync(chatId);
 
         actual.Should()
-            .BeEquivalentTo(
-                expectedChatAgreement,
-                config: options=> options
-                    .Using<DateTime>(ctx
-                        => ctx.Subject
-                            .Should()
-                            .BeCloseTo(ctx.Expectation, 1.Seconds()))
-                    .WhenTypeIs<DateTime>());
+            .BeEquivalentTo(expectedChatSettings);
     }
     
-    [Fact]
-    public async Task SetChatAgreementSendsMessage()
+    [Theory]
+    [InlineData("/setAgreement")]
+    [InlineData("/setAgreement@test_bot")]
+    public async Task SetChatAgreementSendsMessage(
+        string command)
     {
-        var sut = SutFactory.Create();
+        var sut = SutFactory.Create(
+            botName: "test_bot");
 
         var chatId = Gen.RandomLong();
         
@@ -278,14 +244,12 @@ public class BotCommandTests
 
         var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
             messageId: Gen.RandomInt(),
-            text: "/setAgreement",
+            text: command,
             chatId: chatId,
             from: admin,
             replyToMessage: messageWithAgreement);
 
-        var dateTime = DateTime.UtcNow;
-        
-        await sut.HandleUpdateAsync(warnMessageUpdate, dateTime);
+        await sut.HandleUpdateAsync(warnMessageUpdate);
         
         sut.AssertChatMessages(
             chatId: chatId,
@@ -293,14 +257,18 @@ public class BotCommandTests
                 agreement: agreement));
     }
     
-    [Fact]
-    public async Task SetChatAgreementUpdatesAgreement()
+    [Theory]
+    [InlineData("/setAgreement")]
+    [InlineData("/setAgreement@test_bot")]
+    public async Task SetChatAgreementUpdatesAgreement(
+        string command)
     {
-        var sut = SutFactory.Create();
+        var sut = SutFactory.Create(
+            botName: "test_bot");
 
         var chatId = Gen.RandomLong();
         
-        var admin =    ObjectsGen.CreateUser(
+        var admin = ObjectsGen.CreateUser(
             userId: Gen.RandomLong(),
             username: Gen.RandomString());
         
@@ -316,19 +284,19 @@ public class BotCommandTests
 
         var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
             messageId: Gen.RandomInt(),
-            text: "/setAgreement",
+            text: command,
             chatId: chatId,
             from: admin,
             replyToMessage: messageWithAgreement);
 
-        var dateTime = DateTime.UtcNow;
+        var dateTime = sut.GetProvidedDateTime();
         
-        await sut.HandleUpdateAsync(warnMessageUpdate, dateTime);
+        await sut.HandleUpdateAsync(warnMessageUpdate);
         
         var expectedChatAgreement = new ChatSettings(
             telegramId: chatId,
             agreement: agreement1,
-            warnsLimit: 2,
+            warnsLimit: sut.DefaultWarnsLimit,
             banTtl: sut.DefaultBanTtl,
             createdAt: dateTime);
 
@@ -354,14 +322,14 @@ public class BotCommandTests
 
         var warnMessageUpdate2 = ObjectsGen.CreateMessageUpdate(
             messageId: Gen.RandomInt(),
-            text: "/setAgreement",
+            text: command,
             chatId: chatId,
             from: admin,
             replyToMessage: messageWithAgreement2);
 
-        var dateTime2 = DateTime.UtcNow;
+        var dateTime2 = sut.GetProvidedDateTime();
         
-        await sut.HandleUpdateAsync(warnMessageUpdate2, dateTime2);
+        await sut.HandleUpdateAsync(warnMessageUpdate2);
         
         var expectedChatAgreement2 = new ChatSettings(
             telegramId: chatId,

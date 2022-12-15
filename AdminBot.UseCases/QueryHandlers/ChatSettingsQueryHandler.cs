@@ -5,11 +5,11 @@ using AdminBot.UseCases.Repositories;
 
 namespace AdminBot.UseCases.QueryHandlers
 {
-    public class ChatAgreementQueryHandler : ChatSettingsQuery.IHandler
+    public class ChatSettingsQueryHandler : ChatSettingsQuery.IHandler
     {
         private readonly IChatSettingsRepository _chatSettings;
 
-        public ChatAgreementQueryHandler(IChatSettingsRepository chatSettings)
+        public ChatSettingsQueryHandler(IChatSettingsRepository chatSettings)
         {
             _chatSettings = chatSettings;
         }

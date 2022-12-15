@@ -39,6 +39,7 @@ namespace AdminBot.UseCases.Infrastructure.Repositories
                     ? new Person(
                         userId: result.UserId,
                         username: result.Username,
+                        firstName: result.FirstName,
                         chatId: result.ChatId,
                         id: result.Id,
                         createdAt: result.CreatedAt,
@@ -48,9 +49,11 @@ namespace AdminBot.UseCases.Infrastructure.Repositories
             }
         }
 
-        public async Task<Person> AddPersonAsync(long userId,
-            long chatId,
+        public async Task<Person> AddPersonAsync(
+            long userId,
             string username,
+            string firstName,
+            long chatId,
             DateTime createdAt)
         {
             using (var connection = _dbConnectionFactory.Create())
@@ -66,6 +69,7 @@ namespace AdminBot.UseCases.Infrastructure.Repositories
                 return new Person(
                     userId: userId,
                     username: username,
+                    firstName: firstName,
                     chatId: chatId,
                     id: id,
                     createdAt: createdAt,

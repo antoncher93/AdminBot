@@ -19,7 +19,8 @@ namespace AdminBot.Common.Commands
         
         public interface IHandler
         {
-            Task HandleAsync(WarnPersonCommand command);
+            Task HandleAsync(
+                WarnPersonCommand command);
         }
 
         public Person Person { get; }

@@ -1,6 +1,5 @@
 ﻿using AdminBot.Common;
 using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
 
 namespace AdminBot.Web.Tests.RepositoriesTests;
@@ -10,36 +9,35 @@ public class ChatSettingsRepositoriesTest
     [Fact]
     public async Task FindsChatAgreement()
     {
-        var chatSettings = ObjectsGen.CreateRandomChatSettings();
+        var dateTime = DateTime.Today;
+        var chatSettings = ObjectsGen.CreateRandomChatSettings(
+            createdAt: dateTime);
 
         var sut = SutFactory.Create();
 
         await sut.InsertChatSettingsRecordAsync(chatSettings);
 
-        var actual = await sut.FindChatAgreementAsync(chatSettings.TelegramId);
+        var actual = await sut.FindChatAgreementAsync(
+            telegramId: chatSettings.TelegramId);
 
         actual
             .Should()
-            .BeEquivalentTo(
-                chatSettings, 
-                options => options
-                    .Using<DateTime>(ctx
-                        => ctx.Subject
-                            .Should()
-                            .BeCloseTo(ctx.Expectation, 1.Seconds()))
-                    .WhenTypeIs<DateTime>());
+            .BeEquivalentTo(chatSettings);
     }
 
     [Fact]
     public async Task SavesChatSettingsAgreement()
     {
-        var chatSettings = ObjectsGen.CreateRandomChatSettings();
-        var dateTime = DateTime.Now;
         var sut = SutFactory.Create();
+        var dateTime = DateTime.Today;
+        var chatSettings = ObjectsGen.CreateRandomChatSettings(
+            createdAt: dateTime);
 
         await sut.SaveChatSettingsAgreementAsync(
             telegramChatId: chatSettings.TelegramId,
             agreement: chatSettings.Agreement,
+            warnsLimit: chatSettings.WarnsLimit,
+            banTtl: chatSettings.BanTtl,
             dateTime: dateTime);
 
         var record = await sut.FindChatAgreementRecordAsync(
@@ -47,10 +45,9 @@ public class ChatSettingsRepositoriesTest
 
         var actual = MapChatAgreementFromRecord(record);
 
-        actual.Agreement
-            .Should()
+        actual.Should()
             .BeEquivalentTo(
-                chatSettings.Agreement);
+                chatSettings);
     }
 
     private static ChatSettings MapChatAgreementFromRecord(

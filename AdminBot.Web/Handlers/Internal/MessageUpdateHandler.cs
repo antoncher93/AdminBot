@@ -61,6 +61,7 @@ public class MessageUpdateHandler : IMessageUpdateHandler
                             userId: chatMember.Id,
                             chatId: message.Chat.Id,
                             userName: chatMember.Username,
+                            firstName: chatMember.FirstName,
                             dateTime: dateTime));
 
                 await _welcomePersonCommandHandler
@@ -84,7 +85,8 @@ public class MessageUpdateHandler : IMessageUpdateHandler
                 startIndex: botCommandEntity.Offset,
                 length: botCommandEntity.Length);
             
-            await _botCommandMessageHandler.HandleAsync(
+            await _botCommandMessageHandler
+                .HandleAsync(
                     command: command,
                     message: message,
                     receivedAt: receivedAt)

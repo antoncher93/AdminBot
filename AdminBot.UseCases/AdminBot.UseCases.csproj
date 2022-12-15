@@ -63,7 +63,8 @@
         <Compile Include="CommandHandlers\WarnPersonCommandHandler.cs" />
         <Compile Include="CommandHandlers\WelcomePersonCommandHandler.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="QueryHandlers\ChatAgreementQueryHandler.cs" />
+        <Compile Include="Providers\IDateTimeProvider.cs" />
+        <Compile Include="QueryHandlers\ChatSettingsQueryHandler.cs" />
         <Compile Include="QueryHandlers\IsUserAdminQueryHandler.cs" />
         <Compile Include="QueryHandlers\RegisterPersonQueryHandler.cs" />
         <Compile Include="Repositories\IBanRepository.cs" />

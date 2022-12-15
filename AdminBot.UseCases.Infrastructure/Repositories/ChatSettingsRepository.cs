@@ -13,27 +13,22 @@ namespace AdminBot.UseCases.Infrastructure.Repositories
         private readonly AddChatSettingsSqlQuery _addChatSettingsSqlQuery;
         private readonly ChatSettingsByTelegramIdSqlQuery _chatSettingsByTelegramIdSqlQuery;
         private readonly UpdateChatSettingsSqlQuery _updateChatSettingsSqlQuery;
-        private readonly TimeSpan _defaultBanTtl;
-        private readonly int _defaultWarnsLimit;
         public ChatSettingsRepository(
             IDbConnectionFactory dbConnectionFactory,
             AddChatSettingsSqlQuery addChatSettingsSqlQuery,
             ChatSettingsByTelegramIdSqlQuery chatSettingsByTelegramIdSqlQuery, 
-            UpdateChatSettingsSqlQuery updateChatSettingsSqlQuery, 
-            TimeSpan defaultBanTtl, 
-            int defaultWarnsLimit)
+            UpdateChatSettingsSqlQuery updateChatSettingsSqlQuery)
         {
             _dbConnectionFactory = dbConnectionFactory;
-            _defaultBanTtl = defaultBanTtl;
-            _defaultWarnsLimit = defaultWarnsLimit;
             _addChatSettingsSqlQuery = addChatSettingsSqlQuery;
             _chatSettingsByTelegramIdSqlQuery = chatSettingsByTelegramIdSqlQuery;
             _updateChatSettingsSqlQuery = updateChatSettingsSqlQuery;
         }
 
-        public async Task SaveAgreementAsync(
-            long telegramId,
+        public async Task SaveAgreementAsync(long telegramId,
             string agreement,
+            TimeSpan banTtl,
+            int warnsLimit,
             DateTime dateTime)
         {
             using (var connection = _dbConnectionFactory.Create())
@@ -51,9 +46,9 @@ namespace AdminBot.UseCases.Infrastructure.Repositories
                             connection: connection,
                             telegramId: telegramId,
                             agreement: agreement,
-                            warnLimit: _defaultWarnsLimit,
+                            warnLimit: warnsLimit,
                             createdAt: dateTime,
-                            banTtl: _defaultBanTtl)
+                            banTtl: banTtl)
                         .ConfigureAwait(false);
                 }
                 else

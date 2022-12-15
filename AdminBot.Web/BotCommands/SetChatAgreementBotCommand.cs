@@ -5,12 +5,12 @@ public class SetChatAgreementBotCommand
     public SetChatAgreementBotCommand(
         string agreementText,
         long chatId,
-        long fromUserId,
+        long senderId,
         DateTime requestedAt)
     {
         AgreementText = agreementText;
         ChatId = chatId;
-        FromUserId = fromUserId;
+        SenderId = senderId;
         RequestedAt = requestedAt;
     }
     
@@ -20,6 +20,6 @@ public class SetChatAgreementBotCommand
     }
     public string AgreementText { get; }
     public long ChatId { get; }
-    public long FromUserId { get; }
+    public long SenderId { get; }
     public DateTime RequestedAt { get; }
 }

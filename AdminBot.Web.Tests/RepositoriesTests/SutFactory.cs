@@ -16,9 +16,7 @@ public static class SutFactory
         var personsRepository = PersonsRepositoryFactory.Create(ConnectionString);
 
         var chatAgreementRepository = ChatSettingsRepositoryFactory.Create(
-            sqlConnectionString: ConnectionString,
-            defaultBanTtl: TimeSpan.FromHours(3),
-            defaultWarnsLimit: 2);
+            sqlConnectionString: ConnectionString);
 
         var banRepository = new BanRepository(
             dbConnectionFactory: connectionFactory);

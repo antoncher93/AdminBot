@@ -5,6 +5,7 @@ using AdminBot.Common.Messages;
 using AdminBot.UseCases.Infrastructure.Interfaces;
 using Newtonsoft.Json;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -78,7 +79,7 @@ namespace AdminBot.UseCases.Infrastructure.Internal
             button.CallbackData = callbackData;
             var keyboard = new InlineKeyboardMarkup(button);
             var agreement = welcomePersonMessage.Agreement;
-            var mention = Mention(
+            var mention = CreateMention(
                 mention: welcomePersonMessage.UserName,
                 userId: welcomePersonMessage.UserId);
             var text = $"{mention} чтобы писать сообщения нужно принять правила группы!\n" + agreement;
@@ -94,15 +95,13 @@ namespace AdminBot.UseCases.Infrastructure.Internal
             BanPersonMessage banPersonMessage,
             long chatId)
         {
-            var person = banPersonMessage.Person;
-
             var timeZoneIfo = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
             
             var moscowTime = TimeZoneInfo.ConvertTimeFromUtc(banPersonMessage.ExpireAt, timeZoneIfo);
             
             await _client.SendTextMessageAsync(
                 chatId: chatId,
-                text: $"{Mention(person.Username, person.UserId)} забанен до {moscowTime}! ",
+                text: $"{CreateMention(banPersonMessage.UserName, banPersonMessage.UserId)} забанен до {moscowTime}! ",
                 replyToMessageId: banPersonMessage.BlameMessageId,
                 parseMode: ParseMode.Markdown);
         }
@@ -111,17 +110,15 @@ namespace AdminBot.UseCases.Infrastructure.Internal
             WarnPersonMessage warnPersonMessage,
             long chatId)
         {
-            var person = warnPersonMessage.Person;
-
             await _client.SendTextMessageAsync(
                 chatId: chatId,
-                text: $"{Mention(person.Username, person.UserId)} предупреждение {person.Warns}! " +
+                text: $"Предупреждение {warnPersonMessage.Warns}! " +
                       $"Получите больше {warnPersonMessage.WarnsLimit} и будете забанены!",
                 replyToMessageId: warnPersonMessage.BlameMessageId,
                 parseMode: ParseMode.Markdown);
         }
 
-        private static string Mention(
+        private static string CreateMention(
             string mention,
             long userId)
         {

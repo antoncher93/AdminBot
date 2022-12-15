@@ -18,6 +18,7 @@ public class PersonRepositoryTests
             userId: Gen.RandomLong(),
             chatId: Gen.RandomLong(),
             userName: Gen.RandomString(),
+            firstName: Gen.RandomString(),
             createdAt: dateTime);
 
         var record = await sut.FindPersonRecordAsync(
@@ -74,6 +75,7 @@ public class PersonRepositoryTests
             userId: Gen.RandomLong(),
             chatId: Gen.RandomLong(),
             userName: Gen.RandomString(),
+            firstName: Gen.RandomString(),
             createdAt: dateTime - TimeSpan.FromDays(Gen.RandomInt(1, 5)));
 
         await sut.IncrementWarnsAsync(
@@ -89,13 +91,15 @@ public class PersonRepositoryTests
             .Be(person.Warns + 1);
     }
     
-    private static Person MapPersonFromRecord(PersonRecord record)
+    private static Person MapPersonFromRecord(
+        PersonRecord record)
     {
         return new Person(
             id: record.Id,
             userId: record.UserId,
             chatId: record.ChatId,
             username: record.Username,
+            firstName: record.FirstName,
             createdAt: record.CreatedAt,
             warns: record.Warns,
             updatedAt: record.UpdatedAt);
