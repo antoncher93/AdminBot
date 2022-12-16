@@ -52,6 +52,7 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
                 await _warnUserBotCommandHandler
                     .HandleAsync(
                         command: new WarnUserBotCommand(
+                            messageId: message.MessageId,
                             userId: message.ReplyToMessage.From.Id,
                             senderId: message.From.Id,
                             chatId: message.Chat.Id,
@@ -71,6 +72,7 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
                 await _banUserBotCommandHandler
                     .HandleAsync(
                         command: new BanUserBotCommand(
+                            messageId: message.MessageId,
                             userId: user.Id,
                             chatId: message.Chat.Id,
                             username: user.Username ?? user.FirstName,
@@ -88,6 +90,7 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
                 await _setChatAgreementBotCommandHandler
                     .HandleAsync(
                         command: new SetChatAgreementBotCommand(
+                            messageId: message.MessageId,
                             chatId: message.Chat.Id,
                             senderId: message.From.Id,
                             agreementText: message.ReplyToMessage.Text,

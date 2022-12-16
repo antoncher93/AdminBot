@@ -3,6 +3,7 @@
 public class WarnUserBotCommand
 {
     public WarnUserBotCommand(
+        int messageId,
         long userId,
         long senderId,
         long chatId,
@@ -14,6 +15,7 @@ public class WarnUserBotCommand
         ChatId = chatId;
         BlameMessageId = blameMessageId;
         ExecutedAt = executedAt;
+        MessageId = messageId;
         SenderId = senderId;
         Username = username;
     }
@@ -29,4 +31,5 @@ public class WarnUserBotCommand
     public string Username { get; }
     public int BlameMessageId { get; }
     public DateTime ExecutedAt { get; }
+    public int MessageId { get; }
 }

@@ -58,6 +58,8 @@
     <ItemGroup>
         <Compile Include="Clients\IBotClient.cs" />
         <Compile Include="CommandHandlers\BanPersonCommandHandler.cs" />
+        <Compile Include="CommandHandlers\DeleteMessageCommandHandler.cs" />
+        <Compile Include="CommandHandlers\RemoveRestrictionCommandHandler.cs" />
         <Compile Include="CommandHandlers\SaveChatAgreementCommandHandler.cs" />
         <Compile Include="CommandHandlers\ShowDescriptionCommandHandler.cs" />
         <Compile Include="CommandHandlers\WarnPersonCommandHandler.cs" />
