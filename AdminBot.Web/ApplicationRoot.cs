@@ -50,7 +50,7 @@ public static class ApplicationRoot
             .Build()
             .Get<AppConfig>();
 
-        var botClient = BotClientFactory.Create(appConfig.TelegramBotTokenDev);
+        var botClient = BotClientFactory.Create(appConfig.TelegramBotToken);
         
         botClient.SetWebHook(appConfig.WebHookUrl);
         

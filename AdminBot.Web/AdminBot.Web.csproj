@@ -22,4 +22,10 @@
       <ProjectReference Include="..\AdminBot.UseCases\AdminBot.UseCases.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="Description.md">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
