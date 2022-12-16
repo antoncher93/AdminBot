@@ -95,11 +95,11 @@ namespace AdminBot.UseCases.Infrastructure.Internal
             BanPersonMessage banPersonMessage,
             long chatId)
         {
-            var moscowTime = banPersonMessage.ExpireAt + TimeSpan.FromHours(3);
+            var moscowTime = banPersonMessage.ExpireAt + TimeSpan.FromHours(9);
             
             await _client.SendTextMessageAsync(
                 chatId: chatId,
-                text: $"{CreateMention(banPersonMessage.UserName, banPersonMessage.UserId)} забанен до {moscowTime}! ",
+                text: $"{CreateMention(banPersonMessage.UserName, banPersonMessage.UserId)} забанен до {moscowTime:g}! ",
                 replyToMessageId: banPersonMessage.BlameMessageId,
                 parseMode: ParseMode.Markdown);
         }
