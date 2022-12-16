@@ -47,14 +47,15 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
         {
             if (message.ReplyToMessage != null)
             {
+                var user = message.ReplyToMessage.From;
+                
                 await _warnUserBotCommandHandler
                     .HandleAsync(
                         command: new WarnUserBotCommand(
                             userId: message.ReplyToMessage.From.Id,
                             senderId: message.From.Id,
                             chatId: message.Chat.Id,
-                            username: message.ReplyToMessage.From.Username,
-                            firstName: message.ReplyToMessage.From.FirstName,
+                            username: user.Username ?? user.FirstName,
                             blameMessageId: message.ReplyToMessage.MessageId,
                             executedAt: receivedAt));    
             }
@@ -65,13 +66,14 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
         {
             if (message.ReplyToMessage != null)
             {
+                var user = message.ReplyToMessage.From;
+                
                 await _banUserBotCommandHandler
                     .HandleAsync(
                         command: new BanUserBotCommand(
-                            userId: message.ReplyToMessage.From.Id,
+                            userId: user.Id,
                             chatId: message.Chat.Id,
-                            username: message.ReplyToMessage.From.Username,
-                            firstName: message.ReplyToMessage.From.FirstName,
+                            username: user.Username ?? user.FirstName,
                             blameMessageId: message.ReplyToMessage.MessageId,
                             senderId: message.From.Id,
                             executedAt: receivedAt));

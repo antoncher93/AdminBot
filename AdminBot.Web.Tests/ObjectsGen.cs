@@ -9,13 +9,15 @@ public static class ObjectsGen
 {
     public static User CreateUser(
         long userId,
-        string? username = default)
+        string? username)
     {
+        var asFirstName = Gen.RandomBool();
+        
         return new User()
         {
             Id = userId,
-            Username = username,
-            FirstName = Gen.RandomString(),
+            Username = asFirstName ? null : username,
+            FirstName = !asFirstName ? null : username,
         };
     }
     
@@ -114,7 +116,6 @@ public static class ObjectsGen
             userId: Gen.RandomLong(),
             chatId: Gen.RandomLong(),
             username: Gen.RandomString(),
-            firstName: Gen.RandomString(),
             warns: 0,
             createdAt: DateTime.Now,
             updatedAt: DateTime.Now);

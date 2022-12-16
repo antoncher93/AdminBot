@@ -42,7 +42,7 @@ public class BotCommandTests
 
         var expectedMessage = new WarnPersonMessage(
             blameMessageId: messageForWarn.MessageId,
-            userName: user.Username,
+            userName: user.Username ?? user.FirstName,
             userId: user.Id,
             warns: 1,
             warnsLimit: sut.DefaultWarnsLimit);

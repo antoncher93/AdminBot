@@ -60,8 +60,7 @@ public class MessageUpdateHandler : IMessageUpdateHandler
                         query: new RegisterPersonQuery(
                             userId: chatMember.Id,
                             chatId: message.Chat.Id,
-                            userName: chatMember.Username,
-                            firstName: chatMember.FirstName,
+                            userName: chatMember.Username ?? chatMember.FirstName,
                             dateTime: dateTime));
 
                 await _welcomePersonCommandHandler

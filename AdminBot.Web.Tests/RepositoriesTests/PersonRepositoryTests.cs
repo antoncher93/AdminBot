@@ -99,7 +99,6 @@ public class PersonRepositoryTests
             userId: record.UserId,
             chatId: record.ChatId,
             username: record.Username,
-            firstName: record.FirstName,
             createdAt: record.CreatedAt,
             warns: record.Warns,
             updatedAt: record.UpdatedAt);

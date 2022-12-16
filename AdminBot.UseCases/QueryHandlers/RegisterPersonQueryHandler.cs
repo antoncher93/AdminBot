@@ -24,7 +24,6 @@ namespace AdminBot.UseCases.QueryHandlers
                    ?? await _persons.AddPersonAsync(
                            userId: query.UserId,
                            username: query.UserName,
-                           firstName: query.FirstName,
                            chatId: query.ChatId,
                            createdAt: query.DateTime)
                        .ConfigureAwait(false);

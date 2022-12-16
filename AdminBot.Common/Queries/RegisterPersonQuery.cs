@@ -9,14 +9,12 @@ namespace AdminBot.Common.Queries
             long userId,
             long chatId,
             string userName,
-            string firstName,
             DateTime dateTime)
         {
             UserId = userId;
             ChatId = chatId;
             UserName = userName;
             DateTime = dateTime;
-            FirstName = firstName;
         }
         
         public interface IHandler
@@ -29,8 +27,6 @@ namespace AdminBot.Common.Queries
         public long ChatId { get; }
         
         public string UserName { get; }
-        
-        public string FirstName { get; }
         
         public DateTime DateTime { get; }
     }

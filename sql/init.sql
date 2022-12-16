@@ -15,7 +15,6 @@ create table Persons
     UserId    bigint                         not null,
     ChatId    bigint                         not null,
     UserName  nvarchar(50)                   not null,
-    FirstName nvarchar(50)                   not null,
     Warns     int                            not null,
     CreatedAt DATETIME                       not null,
     UpdatedAt DATETIME                       not null,
