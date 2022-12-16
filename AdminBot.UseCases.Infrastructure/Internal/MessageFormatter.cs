@@ -95,9 +95,7 @@ namespace AdminBot.UseCases.Infrastructure.Internal
             BanPersonMessage banPersonMessage,
             long chatId)
         {
-            var timeZoneIfo = TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time");
-            
-            var moscowTime = TimeZoneInfo.ConvertTimeFromUtc(banPersonMessage.ExpireAt, timeZoneIfo);
+            var moscowTime = banPersonMessage.ExpireAt + TimeSpan.FromHours(3);
             
             await _client.SendTextMessageAsync(
                 chatId: chatId,
