@@ -48,7 +48,6 @@ public class WarnUserBotCommandHandler : WarnUserBotCommand.IHandler
                     userId: command.UserId,
                     chatId: command.ChatId,
                     userName: command.Username,
-                    firstName: command.FirstName,
                     dateTime: command.ExecutedAt))
             .ConfigureAwait(false);
         

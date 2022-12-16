@@ -14,7 +14,6 @@ namespace AdminBot.UseCases.Repositories
 
         Task<Person> AddPersonAsync(long userId,
             string username,
-            string firstName,
             long chatId,
             DateTime createdAt);
         

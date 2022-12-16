@@ -34,7 +34,6 @@ public class Sut
         return _personsRepository.AddPersonAsync(
             userId: userId,
             username: userName,
-            firstName: firstName,
             chatId: chatId,
             createdAt: createdAt);
     }

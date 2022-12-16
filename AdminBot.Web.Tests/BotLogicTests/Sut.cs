@@ -148,7 +148,6 @@ public class Sut
         var person = await _personsRepository.AddPersonAsync(
             userId: userId,
             username: userName,
-            firstName: firstName,
             chatId: chatId, createdAt: createdAt);
 
         for (int i = 0; i < warns; i++)

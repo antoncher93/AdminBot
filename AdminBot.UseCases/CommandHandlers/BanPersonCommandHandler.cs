@@ -65,7 +65,7 @@ namespace AdminBot.UseCases.CommandHandlers
                     message: new BanPersonMessage(
                         blameMessageId: command.MessageId,
                         userId: updatedPerson.UserId,
-                        userName: updatedPerson.FirstName,
+                        userName: updatedPerson.Username,
                         expireAt: expireAt),
                     chatId: command.Person.ChatId);
         }

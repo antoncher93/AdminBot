@@ -27,6 +27,11 @@ public static class Gen
         return Guid.NewGuid().ToString();
     }
 
+    public static bool RandomBool()
+    {
+        return new Random().Next(1, 10) > 5;
+    }
+
     public static List<T> ListOfValues<T>(Func<T> nextItem)
     {
         var count = Gen.RandomInt(1, 5);

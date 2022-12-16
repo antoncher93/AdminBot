@@ -32,7 +32,7 @@ namespace AdminBot.UseCases.CommandHandlers
                         warnsLimit: command.WarnsLimit,
                         warns: warns,
                         userId: command.Person.UserId,
-                        userName: command.Person.GetUserOrFirstName(),
+                        userName: command.Person.Username,
                         blameMessageId: command.MessageId),
                     chatId: command.Person.ChatId)
                 .ConfigureAwait(false);

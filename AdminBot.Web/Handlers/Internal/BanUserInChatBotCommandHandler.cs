@@ -39,7 +39,6 @@ public class BanUserInChatBotCommandHandler : BanUserBotCommand.IHandler
                     userId: command.UserId,
                     chatId: command.ChatId,
                     userName: command.Username,
-                    firstName: command.FirstName,
                     dateTime: command.ExecutedAt));
 
         await _banPersonCommandHandler
