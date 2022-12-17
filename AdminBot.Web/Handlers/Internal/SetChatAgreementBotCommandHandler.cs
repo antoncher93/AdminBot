@@ -9,6 +9,7 @@ public class SetChatAgreementBotCommandHandler : SetChatAgreementBotCommand.IHan
     private readonly SaveChatSettingsCommand.IHandler _saveChatSettingsCommandHandler;
     private readonly ChatSettingsQuery.IHandler _chatSettingsQueryHandler;
     private readonly IsUserAdminQuery.IHandler _isUserAdminQueryHandler;
+    private readonly DeleteMessageCommand.IHandler _deleteMessageCommandHandler;
     private readonly int _defaultWarnsLimit;
     private readonly TimeSpan _defaultBanTtl;
     
@@ -16,6 +17,7 @@ public class SetChatAgreementBotCommandHandler : SetChatAgreementBotCommand.IHan
         SaveChatSettingsCommand.IHandler saveChatSettingsCommandHandler,
         IsUserAdminQuery.IHandler isUserAdminQueryHandler,
         ChatSettingsQuery.IHandler chatSettingsQueryHandler,
+        DeleteMessageCommand.IHandler deleteMessageCommandHandler,
         int defaultWarnsLimit,
         TimeSpan defaultBanTtl)
     {
@@ -23,6 +25,7 @@ public class SetChatAgreementBotCommandHandler : SetChatAgreementBotCommand.IHan
         _isUserAdminQueryHandler = isUserAdminQueryHandler;
         _defaultWarnsLimit = defaultWarnsLimit;
         _defaultBanTtl = defaultBanTtl;
+        _deleteMessageCommandHandler = deleteMessageCommandHandler;
         _chatSettingsQueryHandler = chatSettingsQueryHandler;
     }
 
@@ -67,5 +70,11 @@ public class SetChatAgreementBotCommandHandler : SetChatAgreementBotCommand.IHan
                         banTtl: chatSettings.BanTtl,
                         executedAt: command.RequestedAt));
         }
+
+        await _deleteMessageCommandHandler
+            .HandleAsync(
+                command: new DeleteMessageCommand(
+                    messageId: command.MessageId,
+                    chatId: command.ChatId));
     }
 }

@@ -53,6 +53,11 @@ public class BotCommandTests
             .Single()
             .Should()
             .BeEquivalentTo(expectedMessage);
+
+        sut.GetDeletedMessages(chatId)
+            .Single()
+            .Should()
+            .Be(warnMessageUpdate.Message.MessageId);
     }
 
     [Theory]
@@ -149,18 +154,66 @@ public class BotCommandTests
 
         await sut.HandleUpdateAsync(warnMessageUpdate);
 
-        var actualMessages = sut.GetBotMessages(chatId);
-
-        actualMessages
-            .Should()
-            .HaveCount(1);
-
         sut.GetRestrictedUsers(chatId)
             .Should()
             .ContainSingle()
             .Which
             .Should()
             .Be(user.Id);
+    }
+    
+    [Theory]
+    [InlineData("/ban")]
+    [InlineData("/ban@test_bot")]
+    public async Task BanCommandProcessMessages(
+        string command)
+    {
+        var sut = SutFactory.Create(
+            botName: "test_bot");
+
+        var chatId = Gen.RandomLong();
+
+        var user = ObjectsGen.CreateUser(
+            userId: Gen.RandomLong(),
+            username: Gen.RandomString());
+        
+        var admin = ObjectsGen.CreateUser(
+            userId: Gen.RandomLong(),
+            username: Gen.RandomString());
+
+        sut.AddChatAdmin(admin, chatId);
+
+        var messageForBan = ObjectsGen.CreateMessage(
+            messageId: Gen.RandomInt(),
+            text: Gen.RandomString(),
+            chatId: chatId,
+            from: user);
+
+        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
+            messageId: Gen.RandomInt(),
+            text: command,
+            chatId: chatId,
+            from: admin,
+            replyToMessage: messageForBan);
+
+        await sut.HandleUpdateAsync(warnMessageUpdate);
+
+        var actualMessages = sut.GetBotMessages(chatId);
+
+        actualMessages
+            .Single()
+            .Should()
+            .BeEquivalentTo(
+                new BanPersonMessage(
+                    blameMessageId: messageForBan.MessageId,
+                    userName: user.Username ?? user.FirstName,
+                    userId: user.Id,
+                    expireAt: sut.GetProvidedDateTime() + sut.DefaultBanTtl));
+
+        sut.GetDeletedMessages(chatId)
+            .Single()
+            .Should()
+            .Be(warnMessageUpdate.Message.MessageId);
     }
 
     [Theory]
@@ -255,6 +308,11 @@ public class BotCommandTests
             chatId: chatId,
             new ChatRulesHasBeenChangedMessage(
                 agreement: agreement));
+
+        sut.GetDeletedMessages(chatId)
+            .Single()
+            .Should()
+            .Be(warnMessageUpdate.Message.MessageId);
     }
     
     [Theory]

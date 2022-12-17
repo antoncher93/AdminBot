@@ -66,8 +66,6 @@ public class MessageHandlerTests
     {
         var sut = SutFactory.Create();
 
-        var dateTime = DateTime.UtcNow;
-        
         var chatId = Gen.RandomLong();
 
         var user = ObjectsGen.CreateUser(

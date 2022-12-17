@@ -50,6 +50,9 @@ public static class UpdateHandlerFactory
             chatSettingsRepository: chatSettingsRepository,
             botClient: botClient,
             defaultBanTtl: defaultBanTtl);
+        
+        var deleteMessageCommandHandler = new DeleteMessageCommandHandler(
+            client: botClient);
 
         var warnUserBotCommandHandler = new WarnUserBotCommandHandler(
             registerPersonQueryHandler: registerPersonQueryHandler,
@@ -57,20 +60,26 @@ public static class UpdateHandlerFactory
             banPersonCommandHandler: banPersonCommandHandler,
             chatSettingsQueryHandler: chatSettingsQueryHandler,
             isUserAdminHandler: isUserAdminQueryHandler,
+            deleteMessageCommandHandler: deleteMessageCommandHandler,
             defaultWarnsLimit: defaultWarnsLimit);
 
         var banUserBotCommandHandler = new BanUserInChatBotCommandHandler(
             registerPersonQueryHandler: registerPersonQueryHandler,
             isUserAdminCommandHandler: isUserAdminQueryHandler,
-            banPersonCommandHandler: banPersonCommandHandler);
+            banPersonCommandHandler: banPersonCommandHandler,
+            deleteMessageCommandHandler: deleteMessageCommandHandler);
         
         var saveChatAgreementCommandHandler = new SaveChatAgreementCommandHandler(
             chatSettings: chatSettingsRepository,
             botClient: botClient);
 
-        var setChatSettingsBotCommandHandler = new SetChatAgreementBotCommandHandler(
+        var removeRestrictionCommandHandler = new RemoveRestrictionCommandHandler(
+            client: botClient);
+
+       var setChatSettingsBotCommandHandler = new SetChatAgreementBotCommandHandler(
             saveChatSettingsCommandHandler: saveChatAgreementCommandHandler,
             defaultBanTtl: defaultBanTtl, isUserAdminQueryHandler: isUserAdminQueryHandler,
+            deleteMessageCommandHandler: deleteMessageCommandHandler,
             chatSettingsQueryHandler: chatSettingsQueryHandler,
             defaultWarnsLimit: defaultWarnsLimit);
 
@@ -96,6 +105,7 @@ public static class UpdateHandlerFactory
             dateTimeProvider: dateTimeProvider,
             messageHandler: messageUpdateHandler,
             callbackQueryHandler: new CallbackQueryHandler(
-                botClient: botClient));
+                removeRestrictionCommandHandler: removeRestrictionCommandHandler,
+                deleteMessageCommandHandler: deleteMessageCommandHandler));
     }
 }

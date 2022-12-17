@@ -3,7 +3,8 @@
 public class BanUserBotCommand
 {
     public BanUserBotCommand(
-        long userId, 
+        int messageId, 
+        long userId,
         long chatId,
         int blameMessageId,
         string username,
@@ -15,6 +16,7 @@ public class BanUserBotCommand
         BlameMessageId = blameMessageId;
         Username = username;
         ExecutedAt = executedAt;
+        MessageId = messageId;
         SenderId = senderId;
     }
     
@@ -24,6 +26,7 @@ public class BanUserBotCommand
             BanUserBotCommand command);
     }
     
+    public int MessageId { get; }
     public long UserId { get; }
     public string Username { get; }
     public long ChatId { get; }

@@ -1,5 +1,5 @@
 ﻿using AdminBot.Common.CallbackQueries;
-using AdminBot.UseCases.Clients;
+using AdminBot.Common.Commands;
 using Newtonsoft.Json;
 using Telegram.Bot.Types;
 
@@ -7,11 +7,15 @@ namespace AdminBot.Web.Handlers.Internal;
 
 public class CallbackQueryHandler : ICallbackQueryHandler
 {
-    private readonly IBotClient _botClient;
+    private readonly DeleteMessageCommand.IHandler _deleteMessageCommandHandler;
+    private readonly RemoveRestrictionCommand.IHandler _removeRestrictionCommandHandler;
 
-    public CallbackQueryHandler(IBotClient botClient)
+    public CallbackQueryHandler(
+        DeleteMessageCommand.IHandler deleteMessageCommandHandler,
+        RemoveRestrictionCommand.IHandler removeRestrictionCommandHandler)
     {
-        _botClient = botClient;
+        _deleteMessageCommandHandler = deleteMessageCommandHandler;
+        _removeRestrictionCommandHandler = removeRestrictionCommandHandler;
     }
 
     public async Task HandleAsync(Update update)
@@ -40,13 +44,16 @@ public class CallbackQueryHandler : ICallbackQueryHandler
     {
         if (fromUserId == acceptChatRulesQuery.UserId)
         {
-            await _botClient.RemoveRestrictionAsync(
-                userId: acceptChatRulesQuery.UserId,
-                chatId: chatId);
+            await _removeRestrictionCommandHandler
+                .HandleAsync(
+                    command: new RemoveRestrictionCommand(
+                        userId: acceptChatRulesQuery.UserId,
+                        chatId: chatId));
             
-            await _botClient.DeleteMessageAsync(
-                chatId: chatId,
-                messageId: queryMessageId);
+            await _deleteMessageCommandHandler.HandleAsync(
+                command: new DeleteMessageCommand(
+                    chatId: chatId,
+                    messageId: queryMessageId));
         }
     }
 }

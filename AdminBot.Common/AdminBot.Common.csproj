@@ -47,6 +47,8 @@
         <Compile Include="CallbackQueries\CallbackQueryEnvelope.cs" />
         <Compile Include="ChatSettings.cs" />
         <Compile Include="Commands\BanPersonCommand.cs" />
+        <Compile Include="Commands\DeleteMessageCommand.cs" />
+        <Compile Include="Commands\RemoveRestrictionCommand.cs" />
         <Compile Include="Commands\SaveChatSettingsCommand.cs" />
         <Compile Include="Commands\StartBotCommandCommand.cs" />
         <Compile Include="Commands\WarnPersonCommand.cs" />

@@ -11,6 +11,7 @@ public class WarnUserBotCommandHandler : WarnUserBotCommand.IHandler
     private readonly BanPersonCommand.IHandler _banPersonCommandHandler;
     private readonly ChatSettingsQuery.IHandler _chatSettingsQueryHandler;
     private readonly IsUserAdminQuery.IHandler _isUserAdminHandler;
+    private readonly DeleteMessageCommand.IHandler _deleteMessageCommandHandler;
     private readonly int _defaultWarnsLimit;
 
     public WarnUserBotCommandHandler(
@@ -19,6 +20,7 @@ public class WarnUserBotCommandHandler : WarnUserBotCommand.IHandler
         BanPersonCommand.IHandler banPersonCommandHandler,
         ChatSettingsQuery.IHandler chatSettingsQueryHandler,
         IsUserAdminQuery.IHandler isUserAdminHandler,
+        DeleteMessageCommand.IHandler deleteMessageCommandHandler,
         int defaultWarnsLimit)
     {
         _registerPersonQueryHandler = registerPersonQueryHandler;
@@ -26,6 +28,7 @@ public class WarnUserBotCommandHandler : WarnUserBotCommand.IHandler
         _banPersonCommandHandler = banPersonCommandHandler;
         _chatSettingsQueryHandler = chatSettingsQueryHandler;
         _defaultWarnsLimit = defaultWarnsLimit;
+        _deleteMessageCommandHandler = deleteMessageCommandHandler;
         _isUserAdminHandler = isUserAdminHandler;
     }
 
@@ -80,5 +83,11 @@ public class WarnUserBotCommandHandler : WarnUserBotCommand.IHandler
                         requestTime: command.ExecutedAt))
                 .ConfigureAwait(false);
         }
+
+        await _deleteMessageCommandHandler
+            .HandleAsync(
+                command: new DeleteMessageCommand(
+                    messageId: command.MessageId,
+                    chatId: command.ChatId));
     }
 }
