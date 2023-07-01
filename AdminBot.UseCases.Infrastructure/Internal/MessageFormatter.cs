@@ -62,7 +62,7 @@ namespace AdminBot.UseCases.Infrastructure.Internal
         {
             await _client.SendTextMessageAsync(
                 chatId: chatId,
-                text: $"Правила чата были изменены! ");
+                text: $"Правила чата были изменены!");
         }
 
         private async Task OnWelcomePerson(
@@ -95,11 +95,11 @@ namespace AdminBot.UseCases.Infrastructure.Internal
             BanPersonMessage banPersonMessage,
             long chatId)
         {
-            var moscowTime = banPersonMessage.ExpireAt + TimeSpan.FromHours(9);
+            var moscowTime = banPersonMessage.ExpireAt + TimeSpan.FromHours(3);
             
             await _client.SendTextMessageAsync(
                 chatId: chatId,
-                text: $"{CreateMention(banPersonMessage.UserName, banPersonMessage.UserId)} забанен до {moscowTime:g}! ",
+                text: $"{CreateMention(banPersonMessage.UserName, banPersonMessage.UserId)} забанен до {moscowTime:g}!",
                 replyToMessageId: banPersonMessage.BlameMessageId,
                 parseMode: ParseMode.Markdown);
         }

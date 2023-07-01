@@ -1,18 +1,21 @@
-﻿using AdminBot.UseCases.Clients;
-using AdminBot.UseCases.CommandHandlers;
+﻿using AdminBot.UseCases.CommandHandlers;
 using AdminBot.UseCases.Infrastructure;
+using AdminBot.UseCases.Infrastructure.Clients;
 using AdminBot.UseCases.Infrastructure.Internal;
 using AdminBot.UseCases.Infrastructure.Repositories;
 using AdminBot.UseCases.Providers;
 using AdminBot.UseCases.QueryHandlers;
 using AdminBot.Web.Handlers.Internal;
+using Telegram.Bot;
+using Telegram.Bot.Hosting;
 
 namespace AdminBot.Web.Handlers;
 
-public static class UpdateHandlerFactory
+public static class BotFacadeFactory
 {
-    public static IUpdateHandler Create(string sqlConnectionString,
-        IBotClient botClient,
+    public static IBotFacade Create(
+        string sqlConnectionString,
+        ITelegramBotClient client,
         IDateTimeProvider dateTimeProvider,
         TimeSpan defaultBanTtl,
         string botName,
@@ -33,12 +36,16 @@ public static class UpdateHandlerFactory
 
         var chatSettingsQueryHandler = new ChatSettingsQueryHandler(
             chatSettings: chatSettingsRepository);
+        
+        var botClient = new BotClientAdapterAdapter(
+            client: client, 
+            messageFormatter: new MessageFormatter(client));
 
         var isUserAdminQueryHandler = new IsUserAdminQueryHandler(
-            botClient: botClient);
+            botClientAdapter: botClient);
 
         var warnPersonCommandHandler = new WarnPersonCommandHandler(
-            botClient: botClient,
+            botClientAdapter: botClient,
             personsRepository: personsRepository);
 
         var banRepository = new BanRepository(
@@ -48,11 +55,11 @@ public static class UpdateHandlerFactory
             personsRepository: personsRepository,
             banRepository: banRepository,
             chatSettingsRepository: chatSettingsRepository,
-            botClient: botClient,
+            botClientAdapter: botClient,
             defaultBanTtl: defaultBanTtl);
         
         var deleteMessageCommandHandler = new DeleteMessageCommandHandler(
-            client: botClient);
+            botClientAdapter: botClient);
 
         var warnUserBotCommandHandler = new WarnUserBotCommandHandler(
             registerPersonQueryHandler: registerPersonQueryHandler,
@@ -71,10 +78,10 @@ public static class UpdateHandlerFactory
         
         var saveChatAgreementCommandHandler = new SaveChatAgreementCommandHandler(
             chatSettings: chatSettingsRepository,
-            botClient: botClient);
+            botClientAdapter: botClient);
 
         var removeRestrictionCommandHandler = new RemoveRestrictionCommandHandler(
-            client: botClient);
+            clientAdapter: botClient);
 
        var setChatSettingsBotCommandHandler = new SetChatAgreementBotCommandHandler(
             saveChatSettingsCommandHandler: saveChatAgreementCommandHandler,
@@ -89,11 +96,11 @@ public static class UpdateHandlerFactory
             botName: botName,
             setChatAgreementBotCommandHandler: setChatSettingsBotCommandHandler,
             showDescriptionCommandHandler: new ShowDescriptionCommandHandler(
-                botClient: botClient,
+                botClientAdapter: botClient,
                 descriptionFilePath: descriptionFilePath));
 
         var welcomePersonCommandHandler = new WelcomePersonCommandHandler(
-            botClient: botClient);
+            botClientAdapter: botClient);
 
         var messageUpdateHandler = new MessageUpdateHandler(
             botCommandMessageHandler: botCommandUpdateHandler,

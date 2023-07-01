@@ -1,7 +1,9 @@
 ﻿using AdminBot.Common.CallbackQueries;
 using AdminBot.Common.Messages;
+using AdminBot.Web.Tests.Fakes;
 using FluentAssertions;
 using Newtonsoft.Json;
+using Telegram.Bot.Types;
 using Xunit;
 
 namespace AdminBot.Web.Tests.BotLogicTests;
@@ -13,21 +15,14 @@ public class MessageHandlerTests
     {
         var sut = SutFactory.Create();
 
-        var dateTime = DateTime.UtcNow;
-        
         var chatId = Gen.RandomLong();
 
-        var newUsers = Gen.ListOfValues(()
-            => ObjectsGen.CreateUser(
-                userId: Gen.RandomLong(),
-                username: Gen.RandomString()))
-            .ToArray();
+        var newUser = ObjectsGen.CreateUser();
         
-        var newChatMemberMessage = ObjectsGen.CreateMessage(
-            messageId: Gen.RandomInt(),
+        var newChatMemberMessage = ObjectsGen.CreateRandomMessage(
             chatId: chatId,
             from: null,
-            newChatMembers: newUsers);
+            newChatMembers: new[] { newUser });
 
         var update = ObjectsGen.CreateMessageUpdate(newChatMemberMessage);
         
@@ -41,24 +36,12 @@ public class MessageHandlerTests
 
         await sut.HandleUpdateAsync(update);
 
-        var expectedRestrictedUserIds = newUsers
-            .Select(user => user.Id)
-            .ToList();
-
-        sut.GetRestrictedUsers(chatId)
-            .Should()
-            .BeEquivalentTo(expectedRestrictedUserIds);
-
-        var expectedMessages = newUsers
-            .Select(user => new WelcomePersonMessage(
-                userId: user.Id,
-                userName: user.Username,
-                agreement: agreement))
-            .ToArray();
+        var mention = CreateUserMention(newUser);
         
-        sut.AssertChatMessages(
-            chatId: chatId,
-            messages: expectedMessages);
+        sut.AssertBotActions(
+            boActions: new BotActions.TextMessage(
+                Text: $"{mention} чтобы писать сообщения нужно принять правила группы!\n" + agreement,
+                ChatId: chatId));
     }
 
     [Fact]
@@ -72,7 +55,7 @@ public class MessageHandlerTests
             userId: Gen.RandomLong(),
             username: Gen.RandomString());
         
-        var newChatMemberMessage = ObjectsGen.CreateMessage(
+        var newChatMemberMessage = ObjectsGen.CreateRandomMessage(
             messageId: Gen.RandomInt(),
             chatId: chatId,
             from: null,
@@ -88,8 +71,6 @@ public class MessageHandlerTests
 
         await sut.HandleUpdateAsync(update);
         
-        var restrictedUsersBefore = sut.GetRestrictedUsers(chatId);
-
         var acceptChatRulesEnvelope = CallbackQueryEnvelope.FromAcceptChatRules(
             new AcceptChatRulesCallbackQuery(
                 userId: user.Id));
@@ -106,16 +87,17 @@ public class MessageHandlerTests
 
         await sut.HandleUpdateAsync(
             update: callbackQueryUpdate);
-
-        var restrictedUsersAfter = sut.GetRestrictedUsers(chatId);
-
-        restrictedUsersBefore
-            .Should()
-            .BeEquivalentTo(new List<long>() { user.Id });
-
-        restrictedUsersAfter
-            .Should()
-            .BeEmpty();
+        
+        sut.AssertBotActions(
+            new BotActions.RestrictChatMember(
+                ChatId: chatId,
+                UserId: user.Id),
+            new BotActions.RestrictChatMember(
+                ChatId: chatId,
+                UserId: user.Id,
+                CanSendMessages: true,
+                CanSendMediaMessages: true,
+                CanSendOtherMessages: true));
     }
 
     [Fact]
@@ -145,14 +127,17 @@ public class MessageHandlerTests
 
         await sut.HandleUpdateAsync(
             update: callbackQueryUpdate);
+        
+        sut.AssertBotActions(
+            new BotActions.DeleteMessage(
+                ChatId: chatId,
+                MessageId: messageId));
+    }
 
-        sut.GetDeletedMessages(chatId)
-            .Should()
-            .BeEquivalentTo(
-                new[]
-                {
-                    messageId,
-                });
-
+    private static string CreateUserMention(
+        User user)
+    {
+        var mention = user.Username ?? user.FirstName;
+        return $"[{mention}](tg://user?{user.Id})";
     }
 }

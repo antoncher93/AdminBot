@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using AdminBot.Common.Commands;
 using AdminBot.Common.Messages;
-using AdminBot.UseCases.Clients;
+using AdminBot.UseCases.Adapters;
 using AdminBot.UseCases.Repositories;
 
 namespace AdminBot.UseCases.CommandHandlers
@@ -12,20 +12,20 @@ namespace AdminBot.UseCases.CommandHandlers
         private readonly IPersonsRepository _personsRepository;
         private readonly IBanRepository _banRepository;
         private readonly IChatSettingsRepository _chatSettingsRepository;
-        private readonly IBotClient _botClient;
+        private readonly IBotClientAdapter _botClientAdapter;
         private readonly TimeSpan _defaultBanTtl;
 
         public BanPersonCommandHandler(
             IPersonsRepository personsRepository,
             IBanRepository banRepository,
             IChatSettingsRepository chatSettingsRepository,
-            IBotClient botClient,
+            IBotClientAdapter botClientAdapter,
             TimeSpan defaultBanTtl)
         {
             _personsRepository = personsRepository;
             _banRepository = banRepository;
             _defaultBanTtl = defaultBanTtl;
-            _botClient = botClient;
+            _botClientAdapter = botClientAdapter;
             _chatSettingsRepository = chatSettingsRepository;
         }
 
@@ -51,7 +51,7 @@ namespace AdminBot.UseCases.CommandHandlers
                 expireAt: expireAt)
                 .ConfigureAwait(false);
 
-            await _botClient.RestrictUserInChatAsync(
+            await _botClientAdapter.RestrictUserInChatAsync(
                 userId: command.Person.UserId,
                 chatId: command.Person.ChatId,
                 untilDateTime: expireAt);
@@ -60,7 +60,7 @@ namespace AdminBot.UseCases.CommandHandlers
                 userId: command.Person.UserId,
                 chatId: command.Person.ChatId);
             
-            await _botClient
+            await _botClientAdapter
                 .SendMessageAsync(
                     message: new BanPersonMessage(
                         blameMessageId: command.MessageId,

@@ -2,9 +2,9 @@
 using System.Threading.Tasks;
 using AdminBot.Common.Messages;
 
-namespace AdminBot.UseCases.Clients
+namespace AdminBot.UseCases.Adapters
 {
-    public interface IBotClient
+    public interface IBotClientAdapter
     {
         Task RestrictUserInChatAsync(long userId,
             long chatId,

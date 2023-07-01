@@ -4,6 +4,6 @@ namespace AdminBot.UseCases.Providers
 {
     public interface IDateTimeProvider
     {
-        DateTime GetDateTimeNow();
+        DateTime GetUtcNow();
     }
 }

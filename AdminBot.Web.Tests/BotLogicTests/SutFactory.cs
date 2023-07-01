@@ -12,7 +12,7 @@ public static class SutFactory
     public static Sut Create(
         string? botName = null)
     {
-        var fakeBotClient = new FakeBotClient();
+        var fakeBotClient = new FakeTelegramBotClient();
 
         var config = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
@@ -21,9 +21,9 @@ public static class SutFactory
 
         var fakeDateTimeProvider = new FakeDateTimeProvider();
 
-        var updateHandler = UpdateHandlerFactory.Create(
+        var botFacade = BotFacadeFactory.Create(
             sqlConnectionString: config.TestSqlConnectionString,
-            botClient: fakeBotClient,
+            client: fakeBotClient,
             defaultBanTtl: config.DefaultBanTtl,
             botName: botName ?? config.BotName,
             defaultWarnsLimit: config.DefaultWarnsLimit,
@@ -32,21 +32,17 @@ public static class SutFactory
 
         var personsRepository = PersonsRepositoryFactory.Create(config.TestSqlConnectionString);
 
-        var chatSettings = ChatSettingsRepositoryFactory.Create(config.TestSqlConnectionString);
+        var chatSettingsRepository = ChatSettingsRepositoryFactory.Create(config.TestSqlConnectionString);
         
         var chatAgreementQueryHandler = new ChatSettingsQueryHandler(
-            chatSettings: chatSettings);
-
-        var saveChatSettingsCommandHandler = new SaveChatAgreementCommandHandler(
-            chatSettings: chatSettings,
-            botClient: fakeBotClient);
+            chatSettings: chatSettingsRepository);
 
         return new Sut(
-            updateHandler: updateHandler,
-            fakeBotClient: fakeBotClient,
+            botFacade: botFacade,
+            fakeTelegramBotClient: fakeBotClient,
             chatAgreementQueryHandler: chatAgreementQueryHandler,
             personsRepository: personsRepository,
-            saveChatSettingsCommandHandler: saveChatSettingsCommandHandler,
+            chatSettingsRepository: chatSettingsRepository,
             dateTimeProvider: fakeDateTimeProvider,
             defaultBanTtl: config.DefaultBanTtl,
             defaultWarnsLimit: config.DefaultWarnsLimit);

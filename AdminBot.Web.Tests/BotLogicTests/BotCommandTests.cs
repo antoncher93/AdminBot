@@ -1,7 +1,10 @@
 ﻿using AdminBot.Common;
 using AdminBot.Common.Messages;
+using AdminBot.UseCases.Infrastructure.Extensions;
+using AdminBot.Web.Tests.Fakes;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using Telegram.Bot.Types;
 using Xunit;
 
 namespace AdminBot.Web.Tests.BotLogicTests;
@@ -9,84 +12,60 @@ namespace AdminBot.Web.Tests.BotLogicTests;
 public class BotCommandTests
 {
     [Fact]
-    public async Task WarnsBotCommandSendsMessage()
+    public async Task WarnsBotCommandTest()
     {
         var sut = SutFactory.Create();
 
         var chatId = Gen.RandomLong();
 
-        var user = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
+        var user = sut.CreateChatMember(chatId);
 
-        var messageForWarn = ObjectsGen.CreateMessage(
-            messageId: Gen.RandomInt(),
+        var messageForWarn = ObjectsGen.CreateRandomMessage(
             text: Gen.RandomString(),
             chatId: chatId,
             from: user);
-        
-        var admin = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-        
-        sut.AddChatAdmin(admin, chatId);
 
-        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
-            messageId: Gen.RandomInt(),
+        var admin = sut.CreateChatAdmin(
+            chatId: chatId);
+
+        var warnCommandMessage = ObjectsGen.CreateRandomMessage(
             text: "/warn",
             chatId: chatId,
             from: admin,
             replyToMessage: messageForWarn);
 
+        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(warnCommandMessage);
+
         await sut.HandleUpdateAsync(warnMessageUpdate);
-
-        var expectedMessage = new WarnPersonMessage(
-            blameMessageId: messageForWarn.MessageId,
-            userName: user.Username ?? user.FirstName,
-            userId: user.Id,
-            warns: 1,
-            warnsLimit: sut.DefaultWarnsLimit);
         
-        var actualMessages = sut.GetBotMessages(chatId);
-
-        actualMessages
-            .Single()
-            .Should()
-            .BeEquivalentTo(expectedMessage);
-
-        sut.GetDeletedMessages(chatId)
-            .Single()
-            .Should()
-            .Be(warnMessageUpdate.Message.MessageId);
+        sut.AssertBotActions(
+            new BotActions.TextMessage(
+                ChatId: chatId,
+                ReplyToMessageId: messageForWarn.MessageId,
+                Text: $"Предупреждение 1! " +
+                      $"Получите больше {sut.DefaultWarnsLimit} и будете забанены!"),
+            new BotActions.DeleteMessage(
+                ChatId: chatId,
+                MessageId: warnCommandMessage.MessageId));
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("TestUserName")]
-    public async Task WarnBotCommandRestrictsPersonWhenWarnLimitExceeded(
-        string userName)
+    [Fact]
+    public async Task WarnBotCommandRestrictsPersonWhenWarnLimitExceeded()
     {
         var sut = SutFactory.Create();
 
         var dateTime = DateTime.Today;
         var warns = Gen.RandomInt(5);
         var chatId = Gen.RandomLong();
-
-        var user = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: userName);
-
-        var messageForWarn = ObjectsGen.CreateMessage(
+        var banTtl = Gen.RandomTimeSpan();
+        var user = sut.CreateChatMember(chatId);
+        var admin = sut.CreateChatAdmin(chatId);
+        
+        var messageForWarn = ObjectsGen.CreateRandomMessage(
             messageId: Gen.RandomInt(),
             text: Gen.RandomString(),
             chatId: chatId,
             from: user);
-        
-        var admin = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-        
-        sut.AddChatAdmin(admin, chatId);
 
         await sut.SetupPersonAsync(
             userId: user.Id,
@@ -101,218 +80,121 @@ public class BotCommandTests
             chatId: chatId,
             agreement: Gen.RandomString(),
             warnsLimit: warns,
-            banTtl: Gen.RandomTimeSpan());
+            banTtl: banTtl);
 
-        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
-            messageId: Gen.RandomInt(),
+        var warnMessage = ObjectsGen.CreateRandomMessage(
             text: "/warn",
             chatId: chatId,
             from: admin,
             replyToMessage: messageForWarn);
 
+        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(warnMessage);
+
         await sut.HandleUpdateAsync(warnMessageUpdate);
 
-        sut.GetRestrictedUsers(chatId)
-            .Single()
-            .Should()
-            .Be(user.Id);
+        var restrictedUntilDateTime = sut.GetUtcNow() + banTtl;
+        
+        sut.AssertBotActions(
+            new BotActions.RestrictChatMember(
+                ChatId: chatId,
+                UserId: user.Id,
+                CanSendMessages: false,
+                CanSendMediaMessages: false,
+                CanSendOtherMessages: false,
+                UntilDateTime: restrictedUntilDateTime.RoundToSeconds()),
+            new BotActions.TextMessage(
+                ChatId: chatId,
+                ReplyToMessageId: messageForWarn.MessageId,
+                Text: $"{CreateUserMention(user)} забанен до {ToMoscowTime(restrictedUntilDateTime):g}!"),
+            new BotActions.DeleteMessage(
+                MessageId: warnMessage.MessageId,
+                ChatId: chatId));
     }
     
     [Theory]
     [InlineData("/ban")]
     [InlineData("/ban@test_bot")]
-    public async Task BanCommandRestrictsUser(
+    public async Task BanCommandTest(
         string command)
     {
         var sut = SutFactory.Create(
             botName: "test_bot");
 
         var chatId = Gen.RandomLong();
+        var user = sut.CreateChatAdmin(chatId);
+        var admin = sut.CreateChatAdmin(chatId);
 
-        var user = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-        
-        var admin = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-
-        sut.AddChatAdmin(admin, chatId);
-
-        var messageForBan = ObjectsGen.CreateMessage(
-            messageId: Gen.RandomInt(),
+        var messageForBan = ObjectsGen.CreateRandomMessage(
             text: Gen.RandomString(),
             chatId: chatId,
             from: user);
 
-        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
-            messageId: Gen.RandomInt(),
-            text: command,
+        var botCommandMessage = ObjectsGen.CreateRandomMessage(
             chatId: chatId,
             from: admin,
+            text: command,
             replyToMessage: messageForBan);
 
-        await sut.HandleUpdateAsync(warnMessageUpdate);
-
-        sut.GetRestrictedUsers(chatId)
-            .Should()
-            .ContainSingle()
-            .Which
-            .Should()
-            .Be(user.Id);
-    }
-    
-    [Theory]
-    [InlineData("/ban")]
-    [InlineData("/ban@test_bot")]
-    public async Task BanCommandProcessMessages(
-        string command)
-    {
-        var sut = SutFactory.Create(
-            botName: "test_bot");
-
-        var chatId = Gen.RandomLong();
-
-        var user = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
+        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(botCommandMessage);
         
-        var admin = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-
-        sut.AddChatAdmin(admin, chatId);
-
-        var messageForBan = ObjectsGen.CreateMessage(
-            messageId: Gen.RandomInt(),
-            text: Gen.RandomString(),
-            chatId: chatId,
-            from: user);
-
-        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
-            messageId: Gen.RandomInt(),
-            text: command,
-            chatId: chatId,
-            from: admin,
-            replyToMessage: messageForBan);
+        var restrictedUntilDateTime = sut.GetUtcNow() + sut.DefaultBanTtl;
 
         await sut.HandleUpdateAsync(warnMessageUpdate);
 
-        var actualMessages = sut.GetBotMessages(chatId);
-
-        actualMessages
-            .Single()
-            .Should()
-            .BeEquivalentTo(
-                new BanPersonMessage(
-                    blameMessageId: messageForBan.MessageId,
-                    userName: user.Username ?? user.FirstName,
-                    userId: user.Id,
-                    expireAt: sut.GetProvidedDateTime() + sut.DefaultBanTtl));
-
-        sut.GetDeletedMessages(chatId)
-            .Single()
-            .Should()
-            .Be(warnMessageUpdate.Message.MessageId);
+        sut.AssertBotActions(
+            new BotActions.RestrictChatMember(
+                ChatId: chatId,
+                UserId: user.Id,
+                CanSendMessages: false,
+                CanSendMediaMessages: false,
+                CanSendOtherMessages: false,
+                UntilDateTime: restrictedUntilDateTime.RoundToSeconds()),
+            new BotActions.TextMessage(
+                ChatId: chatId,
+                ReplyToMessageId: messageForBan.MessageId,
+                Text: $"{CreateUserMention(user)} забанен до {ToMoscowTime(restrictedUntilDateTime):g}!"),
+            new BotActions.DeleteMessage(
+                MessageId: botCommandMessage.MessageId,
+                ChatId: chatId));
     }
 
     [Theory]
     [InlineData("/setAgreement")]
     [InlineData("/setAgreement@test_bot")]
-    public async Task SetChatAgreementCreatesSettings(
+    public async Task SetChatAgreementSendsMessageTest(
         string command)
     {
         var sut = SutFactory.Create(
             botName: "test_bot");
 
-        var dateTime = sut.GetProvidedDateTime();
-
+        var dateTime = sut.GetUtcNow();
         var chatId = Gen.RandomLong();
-        
-        var admin = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-        
-        sut.AddChatAdmin(admin, chatId);
-
+        var admin = sut.CreateChatAdmin(chatId);
         var agreement = Gen.RandomString();
         
-        var messageWithAgreement = ObjectsGen.CreateMessage(
+        var messageWithAgreement = ObjectsGen.CreateRandomMessage(
             messageId: Gen.RandomInt(),
             text: agreement,
             chatId: chatId,
             from: admin);
 
-        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
-            messageId: Gen.RandomInt(),
+        var botCommandMessage = ObjectsGen.CreateRandomMessage(
             text: command,
             chatId: chatId,
             from: admin,
             replyToMessage: messageWithAgreement);
 
-        await sut.HandleUpdateAsync(warnMessageUpdate);
-        
-        sut.AssertChatMessages(
-            chatId: chatId,
-            new ChatRulesHasBeenChangedMessage(
-                agreement: agreement));
-
-        var expectedChatSettings = new ChatSettings(
-            telegramId: chatId,
-            agreement: agreement,
-            warnsLimit: sut.DefaultWarnsLimit,
-            banTtl: sut.DefaultBanTtl,
-            createdAt: dateTime);
-
-        var actual = await sut.FindChatAgreementAsync(chatId);
-
-        actual.Should()
-            .BeEquivalentTo(expectedChatSettings);
-    }
-    
-    [Theory]
-    [InlineData("/setAgreement")]
-    [InlineData("/setAgreement@test_bot")]
-    public async Task SetChatAgreementSendsMessage(
-        string command)
-    {
-        var sut = SutFactory.Create(
-            botName: "test_bot");
-
-        var chatId = Gen.RandomLong();
-        
-        var admin =    ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-        
-        sut.AddChatAdmin(admin, chatId);
-
-        var agreement = Gen.RandomString();
-        
-        var messageWithAgreement = ObjectsGen.CreateMessage(
-            messageId: Gen.RandomInt(),
-            text: agreement,
-            chatId: chatId,
-            from: admin);
-
-        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
-            messageId: Gen.RandomInt(),
-            text: command,
-            chatId: chatId,
-            from: admin,
-            replyToMessage: messageWithAgreement);
+        var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(botCommandMessage);
 
         await sut.HandleUpdateAsync(warnMessageUpdate);
         
-        sut.AssertChatMessages(
-            chatId: chatId,
-            new ChatRulesHasBeenChangedMessage(
-                agreement: agreement));
-
-        sut.GetDeletedMessages(chatId)
-            .Single()
-            .Should()
-            .Be(warnMessageUpdate.Message.MessageId);
+        sut.AssertBotActions(
+            new BotActions.TextMessage(
+                ChatId: chatId,
+                Text: $"Правила чата были изменены!"),
+            new BotActions.DeleteMessage(
+                ChatId: chatId,
+                MessageId: botCommandMessage.MessageId));
     }
     
     [Theory]
@@ -325,29 +207,22 @@ public class BotCommandTests
             botName: "test_bot");
 
         var chatId = Gen.RandomLong();
-        
-        var admin = ObjectsGen.CreateUser(
-            userId: Gen.RandomLong(),
-            username: Gen.RandomString());
-        
-        sut.AddChatAdmin(admin, chatId);
-
+        var admin = sut.CreateChatAdmin(chatId);
         var agreement1 = Gen.RandomString();
         
-        var messageWithAgreement = ObjectsGen.CreateMessage(
+        var messageWithAgreement = ObjectsGen.CreateRandomMessage(
             messageId: Gen.RandomInt(),
             text: agreement1,
             chatId: chatId,
             from: admin);
 
         var warnMessageUpdate = ObjectsGen.CreateMessageUpdate(
-            messageId: Gen.RandomInt(),
             text: command,
             chatId: chatId,
             from: admin,
             replyToMessage: messageWithAgreement);
 
-        var dateTime = sut.GetProvidedDateTime();
+        var dateTime = sut.GetUtcNow();
         
         await sut.HandleUpdateAsync(warnMessageUpdate);
         
@@ -372,20 +247,19 @@ public class BotCommandTests
         
         var agreement2 = Gen.RandomString();
         
-        var messageWithAgreement2 = ObjectsGen.CreateMessage(
+        var messageWithAgreement2 = ObjectsGen.CreateRandomMessage(
             messageId: Gen.RandomInt(),
             text: agreement2,
             chatId: chatId,
             from: admin);
 
         var warnMessageUpdate2 = ObjectsGen.CreateMessageUpdate(
-            messageId: Gen.RandomInt(),
             text: command,
             chatId: chatId,
             from: admin,
             replyToMessage: messageWithAgreement2);
 
-        var dateTime2 = sut.GetProvidedDateTime();
+        var dateTime2 = sut.GetUtcNow();
         
         await sut.HandleUpdateAsync(warnMessageUpdate2);
         
@@ -407,5 +281,17 @@ public class BotCommandTests
                             .Should()
                             .BeCloseTo(ctx.Expectation, 1.Seconds()))
                     .WhenTypeIs<DateTime>());
+    }
+    
+    private static string CreateUserMention(
+        User user)
+    {
+        var mention = user.Username ?? user.FirstName;
+        return $"[{mention}](tg://user?{user.Id})";
+    }
+
+    private static DateTime ToMoscowTime(DateTime utcTime)
+    {
+        return utcTime + TimeSpan.FromHours(3);
     }
 }

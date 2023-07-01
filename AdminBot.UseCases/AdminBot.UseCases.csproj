@@ -56,7 +56,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Clients\IBotClient.cs" />
+        <Compile Include="Adapters\IBotClientAdapter.cs" />
         <Compile Include="CommandHandlers\BanPersonCommandHandler.cs" />
         <Compile Include="CommandHandlers\DeleteMessageCommandHandler.cs" />
         <Compile Include="CommandHandlers\RemoveRestrictionCommandHandler.cs" />

@@ -1,11 +1,12 @@
-﻿using AdminBot.UseCases.Providers;
+﻿using AdminBot.UseCases.Infrastructure.Extensions;
+using AdminBot.UseCases.Providers;
 
 namespace AdminBot.Web.Tests.Fakes;
 
 public class FakeDateTimeProvider : IDateTimeProvider
 {
-    public DateTime GetDateTimeNow()
+    public DateTime GetUtcNow()
     {
-        return DateTime.Parse("2022-12-14T17:46:00");
+        return DateTime.UtcNow.RoundToSeconds();
     }
 }

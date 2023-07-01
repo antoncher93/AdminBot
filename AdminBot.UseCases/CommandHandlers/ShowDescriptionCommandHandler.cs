@@ -2,20 +2,20 @@
 using System.Threading.Tasks;
 using AdminBot.Common.Commands;
 using AdminBot.Common.Messages;
-using AdminBot.UseCases.Clients;
+using AdminBot.UseCases.Adapters;
 
 namespace AdminBot.UseCases.CommandHandlers
 {
     public class ShowDescriptionCommandHandler : StartBotCommandCommand.IHandler
     {
         private readonly string _descriptionFilePath;
-        private readonly IBotClient _botClient;
+        private readonly IBotClientAdapter _botClientAdapter;
 
         public ShowDescriptionCommandHandler(
-            IBotClient botClient,
+            IBotClientAdapter botClientAdapter,
             string descriptionFilePath)
         {
-            _botClient = botClient;
+            _botClientAdapter = botClientAdapter;
             _descriptionFilePath = descriptionFilePath;
         }
 
@@ -25,7 +25,7 @@ namespace AdminBot.UseCases.CommandHandlers
                 path: _descriptionFilePath,
                 encoding: Encoding.UTF8);
 
-            await _botClient
+            await _botClientAdapter
                 .SendMessageAsync(
                     chatId: commandCommand.ChatId,
                     message: new DescriptionMessage(

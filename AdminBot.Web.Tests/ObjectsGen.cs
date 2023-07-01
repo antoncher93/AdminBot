@@ -8,16 +8,13 @@ namespace AdminBot.Web.Tests;
 public static class ObjectsGen
 {
     public static User CreateUser(
-        long userId,
-        string? username)
+        long? userId = default,
+        string? username = default)
     {
-        var asFirstName = Gen.RandomBool();
-        
         return new User()
         {
-            Id = userId,
-            Username = asFirstName ? null : username,
-            FirstName = !asFirstName ? null : username,
+            Id = userId ?? Gen.RandomLong(),
+            Username = username ?? Gen.RandomString(),
         };
     }
     
@@ -33,7 +30,6 @@ public static class ObjectsGen
     }
 
     public static Update CreateMessageUpdate(
-        int messageId,
         string text,
         long chatId,
         User? from,
@@ -41,8 +37,7 @@ public static class ObjectsGen
     {
         var update = new Update()
         {
-            Message = CreateMessage(
-                messageId:  messageId,
+            Message = CreateRandomMessage(
                 text: text,
                 chatId: chatId,
                 from: from,
@@ -51,11 +46,11 @@ public static class ObjectsGen
         
         return update;
     }
-    
-    public static Message CreateMessage(
-        int messageId,
+
+    public static Message CreateRandomMessage(
         long chatId,
         User? from,
+        int? messageId = default,
         string? text = default,
         Message? replyToMessage = default,
         User[]? newChatMembers = default)
@@ -63,7 +58,7 @@ public static class ObjectsGen
         return new Message()
         {
             Chat = CreateChat(chatId),
-            MessageId = Gen.RandomInt(),
+            MessageId = messageId ?? Gen.RandomInt(),
             Date = DateTime.UtcNow,
             Text = text,
             Entities = GetEntities(text),

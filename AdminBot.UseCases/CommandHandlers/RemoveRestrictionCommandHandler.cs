@@ -1,23 +1,23 @@
 ﻿using System.Threading.Tasks;
 using AdminBot.Common.Commands;
-using AdminBot.UseCases.Clients;
+using AdminBot.UseCases.Adapters;
 
 namespace AdminBot.UseCases.CommandHandlers
 {
     public class RemoveRestrictionCommandHandler : RemoveRestrictionCommand.IHandler
     {
-        private readonly IBotClient _client;
+        private readonly IBotClientAdapter _clientAdapter;
 
         public RemoveRestrictionCommandHandler(
-            IBotClient client)
+            IBotClientAdapter clientAdapter)
         {
-            _client = client;
+            _clientAdapter = clientAdapter;
         }
 
         public Task HandleAsync(
             RemoveRestrictionCommand command)
         {
-            return _client.RemoveRestrictionAsync(
+            return _clientAdapter.RemoveRestrictionAsync(
                 userId: command.UserId,
                 chatId: command.ChatId);
         }

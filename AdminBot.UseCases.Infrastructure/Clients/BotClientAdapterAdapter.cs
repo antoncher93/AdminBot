@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using AdminBot.Common.Messages;
-using AdminBot.UseCases.Clients;
+using AdminBot.UseCases.Adapters;
 using AdminBot.UseCases.Infrastructure.Interfaces;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -9,12 +9,12 @@ using Telegram.Bot.Types.Enums;
 
 namespace AdminBot.UseCases.Infrastructure.Clients
 {
-    internal class BotClient : IBotClient
+    public class BotClientAdapterAdapter : IBotClientAdapter
     {
         private readonly ITelegramBotClient _client;
         private readonly IMessageFormatter _messageFormatter;
 
-        public BotClient(
+        public BotClientAdapterAdapter(
             ITelegramBotClient client,
             IMessageFormatter messageFormatter)
         {

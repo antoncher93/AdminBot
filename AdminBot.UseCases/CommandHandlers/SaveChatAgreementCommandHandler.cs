@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using AdminBot.Common.Commands;
 using AdminBot.Common.Messages;
-using AdminBot.UseCases.Clients;
+using AdminBot.UseCases.Adapters;
 using AdminBot.UseCases.Repositories;
 
 namespace AdminBot.UseCases.CommandHandlers
@@ -9,14 +9,14 @@ namespace AdminBot.UseCases.CommandHandlers
     public class SaveChatAgreementCommandHandler : SaveChatSettingsCommand.IHandler
     {
         private readonly IChatSettingsRepository _chatSettings;
-        private readonly IBotClient _botClient;
+        private readonly IBotClientAdapter _botClientAdapter;
 
         public SaveChatAgreementCommandHandler(
             IChatSettingsRepository chatSettings,
-            IBotClient botClient)
+            IBotClientAdapter botClientAdapter)
         {
             _chatSettings = chatSettings;
-            _botClient = botClient;
+            _botClientAdapter = botClientAdapter;
         }
 
         public async Task HandleAsync(SaveChatSettingsCommand command)
@@ -29,7 +29,7 @@ namespace AdminBot.UseCases.CommandHandlers
                     warnsLimit: command.WarnsLimit,
                     banTtl: command.BanTtl);
 
-            await _botClient
+            await _botClientAdapter
                 .SendMessageAsync(
                     message: new ChatRulesHasBeenChangedMessage(
                         agreement: command.Agreement),

@@ -1,10 +1,11 @@
 ﻿using AdminBot.UseCases.Providers;
+using Telegram.Bot.Hosting;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace AdminBot.Web.Handlers.Internal;
 
-internal class UpdateHandler : IUpdateHandler
+internal class UpdateHandler : IBotFacade
 {
     private readonly ICallbackQueryHandler _callbackQueryHandler;
     private readonly IMessageUpdateHandler _messageHandler;
@@ -20,11 +21,13 @@ internal class UpdateHandler : IUpdateHandler
         _dateTimeProvider = dateTimeProvider;
     }
 
-    public async Task HandleAsync(Update update)
+    public async Task OnUpdateAsync(
+        Update update)
     {
         if (update.Type == UpdateType.Message && update.Message != null)
         {
-            var receivedAt = _dateTimeProvider.GetDateTimeNow();
+            var receivedAt = _dateTimeProvider
+                .GetUtcNow();
             
             await _messageHandler
                 .HandleAsync(

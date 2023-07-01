@@ -1,42 +1,41 @@
 ﻿using AdminBot.Common;
-using AdminBot.Common.Commands;
-using AdminBot.Common.Messages;
 using AdminBot.Common.Queries;
+using AdminBot.UseCases.Infrastructure.Extensions;
 using AdminBot.UseCases.Providers;
 using AdminBot.UseCases.Repositories;
-using AdminBot.Web.Handlers;
 using AdminBot.Web.Tests.Fakes;
 using FluentAssertions;
-using FluentAssertions.Extensions;
+using Telegram.Bot.Hosting;
 using Telegram.Bot.Types;
 
 namespace AdminBot.Web.Tests.BotLogicTests;
 
 public class Sut
 {
-    private readonly IUpdateHandler _updateHandler;
-    private readonly FakeBotClient _fakeBotClient;
+    private readonly IBotFacade _botFacade;
+    private readonly FakeTelegramBotClient _fakeTelegramBotClient;
     private readonly ChatSettingsQuery.IHandler _chatAgreementQueryHandler;
     private readonly IPersonsRepository _personsRepository;
-    private readonly SaveChatSettingsCommand.IHandler _saveChatSettingsCommandHandler;
+    private readonly IChatSettingsRepository _chatSettingsRepository;
     private readonly IDateTimeProvider _dateTimeProvider;
 
     public Sut(
-        IUpdateHandler updateHandler,
-        FakeBotClient fakeBotClient,
+        IBotFacade botFacade,
+        FakeTelegramBotClient fakeTelegramBotClient,
         ChatSettingsQuery.IHandler chatAgreementQueryHandler,
         IPersonsRepository personsRepository,
-        SaveChatSettingsCommand.IHandler saveChatSettingsCommandHandler,
+        IChatSettingsRepository chatSettingsRepository,
         IDateTimeProvider dateTimeProvider,
-        int defaultWarnsLimit, TimeSpan defaultBanTtl)
+        int defaultWarnsLimit,
+        TimeSpan defaultBanTtl)
     {
-        _updateHandler = updateHandler;
-        _fakeBotClient = fakeBotClient;
+        _botFacade = botFacade;
+        _fakeTelegramBotClient = fakeTelegramBotClient;
         _chatAgreementQueryHandler = chatAgreementQueryHandler;
         DefaultWarnsLimit = defaultWarnsLimit;
         DefaultBanTtl = defaultBanTtl;
+        _chatSettingsRepository = chatSettingsRepository;
         _dateTimeProvider = dateTimeProvider;
-        _saveChatSettingsCommandHandler = saveChatSettingsCommandHandler;
         _personsRepository = personsRepository;
     }
     
@@ -46,48 +45,24 @@ public class Sut
     public Task HandleUpdateAsync(
         Update update)
     {
-        return _updateHandler
-            .HandleAsync(
+        return _botFacade
+            .OnUpdateAsync(
                 update: update);
     }
-    
-    public void AssertChatMessages(
-        long chatId,
-        params IMessage[] messages)
+
+    public void AssertBotActions(
+        params BotActions.IBotAction[] boActions)
     {
-        var actual = _fakeBotClient.GetBotMessages(chatId);
-        actual.Should()
+        _fakeTelegramBotClient.GetBotActions()
+            .Should()
             .BeEquivalentTo(
-                messages,
-                config: options =>
-                {
-                    options
-                        .RespectingRuntimeTypes()
-                        .ComparingByMembers<WarnPersonMessage>()
-                        .ComparingByMembers<BanPersonMessage>()
-                        .ComparingByMembers<ChatRulesHasBeenChangedMessage>()
-                        .Using<DateTime>(ctx
-                                => ctx.Subject
-                                    .Should()
-                                    .BeCloseTo(ctx.Expectation, 1.Seconds()))
-                            .WhenTypeIs<DateTime>();
-                    return options;
-                });
-    }
-
-    public IMessage[] GetBotMessages(
-        long chatId)
-    {
-        return _fakeBotClient.GetBotMessages(chatId);
-    }
-
-    public Task<Person> FindPerson(
-        long userId,
-        long chatId)
-    {
-        return _personsRepository.GetPersonAsync(
-            userId: userId,
-            chatId: chatId);
+                expectation: boActions,
+                config: options => options
+                    .WithStrictOrdering()
+                    .RespectingRuntimeTypes()
+                    .ComparingByMembers<BotActions.RestrictChatMember>()
+                    .ComparingByMembers<BotActions.DeleteMessage>()
+                    .ComparingByMembers<BotActions.TextMessage>());
     }
 
     public Task<ChatSettings> FindChatAgreementAsync(long chatId)
@@ -98,21 +73,26 @@ public class Sut
                     chatId: chatId));
     }
 
-    public List<long> GetRestrictedUsers(long chatId)
+    public User CreateChatMember(long chatId)
     {
-        return _fakeBotClient
-            .GetRestrictedUsers(chatId)
-            .ToList();
+        var user = ObjectsGen.CreateUser();
+        
+        _fakeTelegramBotClient.CreateChatMember(
+            user: user,
+            chatId: chatId);
+
+        return user;
     }
 
-    public void AddChatAdmin(User admin, long chatId)
+    public User CreateChatAdmin(long chatId)
     {
-        _fakeBotClient.SetupChatAdmin(admin.Id, chatId);
-    }
+        var user = ObjectsGen.CreateUser();
+        
+        _fakeTelegramBotClient.CreateChatAdmin(
+            user: user,
+            chatId: chatId);
 
-    public int?[] GetDeletedMessages(long chatId)
-    {
-        return _fakeBotClient.GetDeletedMessages(chatId);
+        return user;
     }
 
     public Task SetChatSettingsAsync(
@@ -121,19 +101,17 @@ public class Sut
         int warnsLimit,
         TimeSpan banTtl)
     {
-        return _saveChatSettingsCommandHandler
-            .HandleAsync(
-                command: new SaveChatSettingsCommand(
-                    telegramId: chatId,
-                    agreement: agreement,
-                    warnsLimit: warnsLimit,
-                    banTtl: banTtl,
-                    executedAt: _dateTimeProvider.GetDateTimeNow()));
+        return _chatSettingsRepository.SaveAgreementAsync(
+            telegramId: chatId,
+            agreement: agreement,
+            banTtl: banTtl,
+            warnsLimit: warnsLimit,
+            dateTime: _dateTimeProvider.GetUtcNow());
     }
 
-    public DateTime GetProvidedDateTime()
+    public DateTime GetUtcNow()
     {
-        return _dateTimeProvider.GetDateTimeNow();
+        return _dateTimeProvider.GetUtcNow();
     }
 
     public async Task SetupPersonAsync(

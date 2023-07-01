@@ -1,5 +1,4 @@
 ﻿using AdminBot.Common.Commands;
-using AdminBot.Common.Queries;
 using AdminBot.Web.BotCommands;
 using Telegram.Bot.Types;
 
@@ -47,14 +46,14 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
         {
             if (message.ReplyToMessage != null)
             {
-                var user = message.ReplyToMessage.From;
+                var user = message.ReplyToMessage.From!;
                 
                 await _warnUserBotCommandHandler
                     .HandleAsync(
                         command: new WarnUserBotCommand(
                             messageId: message.MessageId,
-                            userId: message.ReplyToMessage.From.Id,
-                            senderId: message.From.Id,
+                            userId: message.ReplyToMessage.From!.Id,
+                            senderId: message.From!.Id,
                             chatId: message.Chat.Id,
                             username: user.Username ?? user.FirstName,
                             blameMessageId: message.ReplyToMessage.MessageId,
@@ -67,7 +66,7 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
         {
             if (message.ReplyToMessage != null)
             {
-                var user = message.ReplyToMessage.From;
+                var user = message.ReplyToMessage.From!;
                 
                 await _banUserBotCommandHandler
                     .HandleAsync(
@@ -77,7 +76,7 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
                             chatId: message.Chat.Id,
                             username: user.Username ?? user.FirstName,
                             blameMessageId: message.ReplyToMessage.MessageId,
-                            senderId: message.From.Id,
+                            senderId: message.From!.Id,
                             executedAt: receivedAt));
             }
         }
@@ -92,8 +91,8 @@ internal class BotCommandMessageHandler : IBotCommandMessageHandler
                         command: new SetChatAgreementBotCommand(
                             messageId: message.MessageId,
                             chatId: message.Chat.Id,
-                            senderId: message.From.Id,
-                            agreementText: message.ReplyToMessage.Text,
+                            senderId: message.From!.Id,
+                            agreementText: message.ReplyToMessage.Text!,
                             requestedAt: receivedAt));
             }
         }
